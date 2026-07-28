@@ -1,0 +1,9 @@
+.DS_Store
+.superpowers/
+/docs/
+/work/
+node_modules/
+dist/
+src-tauri/target/
+*.log
+npm-debug.log*

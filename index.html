@@ -1,0 +1,25 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Delaporia Pet</title>
+  </head>
+  <body>
+    <canvas id="pet-canvas" aria-label="桌面宠物"></canvas>
+    <div
+      id="pet-interaction-wheel"
+      class="pet-interaction-wheel"
+      data-phase="closed"
+      aria-hidden="true"
+    ></div>
+    <div
+      id="pet-prop-overlay"
+      class="pet-prop-overlay"
+      aria-hidden="true"
+    ></div>
+    <div id="pet-care-status" class="pet-care-status" hidden></div>
+    <div id="test-action-label" aria-live="polite"></div>
+    <script type="module" src="/src/main.ts"></script>
+  </body>
+</html>

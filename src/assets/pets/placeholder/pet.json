@@ -1,0 +1,47 @@
+{
+  "schemaVersion": 1,
+  "id": "placeholder",
+  "displayName": "Placeholder",
+  "description": "A safe built-in desktop companion",
+  "spriteVersionNumber": 2,
+  "display": {
+    "scale": 0.6
+  },
+  "atlases": {
+    "main": {
+      "path": "spritesheet.webp",
+      "cellWidth": 192,
+      "cellHeight": 208,
+      "columns": 8,
+      "rows": 11
+    }
+  },
+  "animations": {
+    "idle": {
+      "atlas": "main",
+      "row": 0,
+      "frames": [0, 1, 2, 3, 4, 5],
+      "fps": 8,
+      "loop": true
+    },
+    "walkRight": {
+      "atlas": "main",
+      "row": 1,
+      "frames": [0, 1, 2, 3, 4, 5, 6, 7],
+      "fps": 10,
+      "loop": true
+    },
+    "walkLeft": {
+      "atlas": "main",
+      "row": 2,
+      "frames": [0, 1, 2, 3, 4, 5, 6, 7],
+      "fps": 10,
+      "loop": true
+    }
+  },
+  "capabilities": {
+    "idle": "idle",
+    "walkRight": "walkRight",
+    "walkLeft": "walkLeft"
+  }
+}

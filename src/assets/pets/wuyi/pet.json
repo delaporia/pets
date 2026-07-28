@@ -1,0 +1,229 @@
+{
+  "schemaVersion": 1,
+  "id": "wuyi",
+  "displayName": "五一",
+  "description": "一只白色长毛、额头浅金灰纹、蓝绿色大眼睛，佩戴红色针织围脖和金色铜钱的可爱猫咪。",
+  "spriteVersionNumber": 2,
+  "display": {
+    "scale": 0.6,
+    "visualBounds": { "left": 5, "top": 5, "right": 187, "bottom": 203 },
+    "footAnchor": { "x": 96, "y": 203 }
+  },
+  "atlases": {
+    "main": {
+      "path": "spritesheet.webp",
+      "cellWidth": 192,
+      "cellHeight": 208,
+      "columns": 8,
+      "rows": 11
+    }
+  },
+  "animations": {
+    "idle": {
+      "atlas": "main",
+      "row": 0,
+      "frames": [0, 1, 2, 3, 4, 5],
+      "fps": 4,
+      "loop": true
+    },
+    "walkRight": {
+      "atlas": "main",
+      "row": 1,
+      "frames": [0, 1, 2, 3, 4, 5, 6, 7],
+      "fps": 7,
+      "loop": true
+    },
+    "walkLeft": {
+      "atlas": "main",
+      "row": 2,
+      "frames": [0, 1, 2, 3, 4, 5, 6, 7],
+      "fps": 7,
+      "loop": true
+    },
+    "wave": {
+      "atlas": "main",
+      "row": 3,
+      "frames": [0, 1, 2, 3],
+      "fps": 5,
+      "loop": false
+    },
+    "jump": {
+      "atlas": "main",
+      "row": 4,
+      "frames": [0, 1, 2, 3, 4],
+      "fps": 5,
+      "loop": false
+    },
+    "pickedUpPose": { "atlas": "main", "row": 4, "frames": [2, 3], "fps": 2, "loop": true },
+    "landSoftly": { "atlas": "main", "row": 4, "frames": [3, 4], "fps": 5, "loop": false },
+    "sleepEnter": { "atlas": "main", "row": 5, "frames": [0, 1, 2, 3, 4, 5, 6, 7], "fps": 3, "loop": false },
+    "sleepLoop": { "atlas": "main", "row": 5, "frames": [7], "fps": 1, "loop": true },
+    "sleepExit": { "atlas": "main", "row": 5, "frames": [7, 6, 5, 4, 3, 2, 1, 0], "fps": 4, "loop": false },
+    "feedEnter": { "atlas": "main", "row": 6, "frames": [0, 1, 2], "fps": 3, "loop": false },
+    "feedLoop": { "atlas": "main", "row": 6, "frames": [2, 3, 4, 3], "fps": 3, "loop": true },
+    "feedExit": { "atlas": "main", "row": 6, "frames": [4, 5], "fps": 4, "loop": false },
+    "settleDown": {
+      "atlas": "main",
+      "row": 5,
+      "frames": [0, 1, 2, 3, 4, 5, 6, 7],
+      "fps": 4,
+      "loop": true
+    },
+    "reachPaw": {
+      "atlas": "main",
+      "row": 6,
+      "frames": [0, 1, 2, 3, 4, 5],
+      "fps": 4,
+      "loop": true
+    },
+    "groom": {
+      "atlas": "main",
+      "row": 7,
+      "frames": [0, 1, 2, 3, 4, 5],
+      "fps": 4,
+      "loop": true
+    },
+    "observe": {
+      "atlas": "main",
+      "row": 8,
+      "frames": [0, 1, 2, 3, 4, 5],
+      "fps": 4,
+      "loop": true
+    },
+    "lookUpper": {
+      "atlas": "main",
+      "row": 9,
+      "frames": [0, 1, 2, 3, 4, 5, 6, 7],
+      "fps": 4,
+      "loop": false
+    },
+    "lookLower": {
+      "atlas": "main",
+      "row": 10,
+      "frames": [0, 1, 2, 3, 4, 5, 6, 7],
+      "fps": 4,
+      "loop": false
+    }
+  },
+  "capabilities": {
+    "idle": "idle",
+    "walkRight": "walkRight",
+    "walkLeft": "walkLeft",
+    "look": "observe",
+    "pet": "wave",
+    "feed": "feedLoop",
+    "sleep": "sleepLoop",
+    "groom": "groom",
+    "stretch": "reachPaw",
+    "play": "jump",
+    "pickedUp": "pickedUpPose",
+    "land": "landSoftly",
+    "lookUpper": "lookUpper",
+    "lookLower": "lookLower"
+  },
+  "actions": {
+    "idle": { "loop": "idle" },
+    "walkLeft": { "loop": "walkLeft" },
+    "walkRight": { "loop": "walkRight" },
+    "look": { "loop": "observe", "loopDuration": { "minMs": 3000, "maxMs": 6000 } },
+    "pet": { "loop": "wave" },
+    "feed": { "enter": "feedEnter", "loop": "feedLoop", "exit": "feedExit", "loopDuration": { "minMs": 4000, "maxMs": 8000 } },
+    "sleep": { "enter": "sleepEnter", "loop": "sleepLoop", "exit": "sleepExit", "loopDuration": { "minMs": 30000, "maxMs": 120000 } },
+    "groom": { "enter": "idle", "loop": "groom", "exit": "idle", "loopDuration": { "minMs": 5000, "maxMs": 12000 } },
+    "stretch": { "loop": "reachPaw" },
+    "play": { "loop": "jump" },
+    "pickedUp": { "loop": "pickedUpPose" },
+    "land": { "loop": "landSoftly" }
+  },
+  "autonomousActions": [],
+  "behaviorProfile": {
+    "scheduler": {
+      "minIntervalMs": 9000,
+      "maxIntervalMs": 18000,
+      "recoveryMs": 8000
+    },
+    "movement": {
+      "walkSpeed": 32,
+      "minDurationMs": 2500,
+      "maxDurationMs": 5000,
+      "roamingHalfWidth": 180
+    },
+    "categoryWeights": {
+      "movement": 20,
+      "ambient": 30,
+      "rest": 25,
+      "social": 25
+    },
+    "actions": [
+      {
+        "id": "look-around",
+        "capability": "look",
+        "category": "ambient",
+        "playback": "timed",
+        "weight": 4,
+        "cooldownMs": 10000,
+        "minDurationMs": 3000,
+        "maxDurationMs": 6000
+      },
+      {
+        "id": "self-groom",
+        "capability": "groom",
+        "category": "ambient",
+        "playback": "timed",
+        "weight": 3,
+        "cooldownMs": 14000,
+        "minDurationMs": 5000,
+        "maxDurationMs": 12000
+      },
+      {
+        "id": "deep-rest",
+        "capability": "sleep",
+        "category": "rest",
+        "playback": "timed",
+        "weight": 2,
+        "cooldownMs": 60000,
+        "minDurationMs": 30000,
+        "maxDurationMs": 120000
+      },
+      {
+        "id": "pet-response",
+        "capability": "pet",
+        "category": "social",
+        "playback": "once",
+        "weight": 3,
+        "cooldownMs": 12000
+      },
+      {
+        "id": "playful-hop",
+        "capability": "play",
+        "category": "movement",
+        "playback": "once",
+        "weight": 0.6,
+        "cooldownMs": 28000
+      },
+      {
+        "id": "gentle-stretch",
+        "capability": "stretch",
+        "category": "ambient",
+        "playback": "once",
+        "weight": 1.5,
+        "cooldownMs": 20000
+      }
+    ],
+    "interaction": {
+      "nearbyRadius": 240,
+      "cursorPollMs": 250,
+      "multiClickWindowMs": 1800,
+      "multiClickThreshold": 3,
+      "singleClickAction": "pet-response",
+      "multiClickAction": "playful-hop",
+      "nearbyAction": "look-around",
+      "pickedUpCapability": "pickedUp",
+      "landCapability": "land"
+    },
+    "fallbackCapabilities": [
+      "idle",
+      "look"
+    ]
+  }
+}

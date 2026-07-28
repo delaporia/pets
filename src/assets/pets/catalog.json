@@ -1,0 +1,5 @@
+{
+  "schemaVersion": 1,
+  "defaultPet": "wuyi",
+  "pets": ["wuyi", "ying", "baitang", "duobi"]
+}
