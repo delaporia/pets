@@ -1,6 +1,7 @@
 {
   "schemaVersion": 1,
   "id": "duobi",
+  "sceneEngine": "realtime-v1",
   "displayName": "多比",
   "description": "暖褐色短毛猫，极度粘人，最喜欢贴近主人、绕尾等待和反复蹭脸。",
   "spriteVersionNumber": 2,
@@ -16,6 +17,13 @@
       "cellHeight": 208,
       "columns": 8,
       "rows": 11
+    },
+    "actionsV2": {
+      "path": "actions-v2.webp",
+      "cellWidth": 192,
+      "cellHeight": 208,
+      "columns": 8,
+      "rows": 2
     }
   },
   "animations": {
@@ -37,7 +45,11 @@
     "cheekRub": { "atlas": "main", "row": 7, "frames": [0, 1, 2, 3, 4, 5], "fps": 5, "loop": true },
     "observe": { "atlas": "main", "row": 8, "frames": [0, 1, 2, 3, 4, 5], "fps": 4, "loop": true },
     "lookUpper": { "atlas": "main", "row": 9, "frames": [0, 1, 2, 3, 4, 5, 6, 7], "fps": 4, "loop": false },
-    "lookLower": { "atlas": "main", "row": 10, "frames": [0, 1, 2, 3, 4, 5, 6, 7], "fps": 4, "loop": false }
+    "lookLower": { "atlas": "main", "row": 10, "frames": [0, 1, 2, 3, 4, 5, 6, 7], "fps": 4, "loop": false },
+    "curlSleepEnter": { "atlas": "actionsV2", "row": 0, "frames": [0, 1, 2, 3], "fps": 3, "loop": false },
+    "curlSleepLoop": { "atlas": "actionsV2", "row": 0, "frames": [3, 4, 5, 4], "fps": 2, "loop": true },
+    "curlSleepExit": { "atlas": "actionsV2", "row": 0, "frames": [6, 7], "fps": 3, "loop": false },
+    "pawGroom": { "atlas": "actionsV2", "row": 1, "frames": [0, 1, 2, 3, 4, 5, 6, 7], "fps": 4, "loop": false }
   },
   "capabilities": {
     "idle": "idle",
@@ -46,8 +58,8 @@
     "look": "observe",
     "pet": "cheekRub",
     "feed": "feedLoop",
-    "sleep": "sleepLoop",
-    "groom": "cheekRub",
+    "sleep": "curlSleepLoop",
+    "groom": "pawGroom",
     "stretch": "greetingPaw",
     "play": "smallHop",
     "pickedUp": "pickedUpPose",
@@ -62,19 +74,19 @@
     "look": { "loop": "observe", "loopDuration": { "minMs": 3000, "maxMs": 6000 } },
     "pet": { "loop": "cheekRub" },
     "feed": { "enter": "feedEnter", "loop": "feedLoop", "exit": "feedExit", "loopDuration": { "minMs": 4000, "maxMs": 8000 } },
-    "sleep": { "enter": "sleepEnter", "loop": "sleepLoop", "exit": "sleepExit", "loopDuration": { "minMs": 30000, "maxMs": 120000 } },
-    "groom": { "enter": "idle", "loop": "cheekRub", "exit": "idle", "loopDuration": { "minMs": 5000, "maxMs": 12000 } },
+    "sleep": { "enter": "curlSleepEnter", "loop": "curlSleepLoop", "exit": "curlSleepExit", "loopDuration": { "minMs": 30000, "maxMs": 120000 } },
+    "groom": { "enter": "idle", "loop": "pawGroom", "exit": "idle", "loopDuration": { "minMs": 4000, "maxMs": 8000 } },
     "stretch": { "loop": "greetingPaw" },
     "play": { "loop": "smallHop" },
     "pickedUp": { "loop": "pickedUpPose" },
     "land": { "loop": "landSoftly" }
   },
-  "autonomousActions": [],
   "behaviorProfile": {
     "scheduler": { "minIntervalMs": 9000, "maxIntervalMs": 18000, "recoveryMs": 8000 },
     "movement": { "walkSpeed": 32, "minDurationMs": 2500, "maxDurationMs": 5000, "roamingHalfWidth": 180 },
     "categoryWeights": { "movement": 20, "ambient": 30, "rest": 25, "social": 25 },
     "actions": [
+      { "id": "walk-around", "capability": "walkRight", "category": "movement", "playback": "timed", "weight": 4, "cooldownMs": 10000, "minDurationMs": 2500, "maxDurationMs": 5000 },
       { "id": "look-around", "capability": "look", "category": "ambient", "playback": "timed", "weight": 4, "cooldownMs": 10000, "minDurationMs": 3000, "maxDurationMs": 6000 },
       { "id": "self-groom", "capability": "groom", "category": "ambient", "playback": "timed", "weight": 3, "cooldownMs": 14000, "minDurationMs": 5000, "maxDurationMs": 12000 },
       { "id": "deep-rest", "capability": "sleep", "category": "rest", "playback": "timed", "weight": 2, "cooldownMs": 60000, "minDurationMs": 30000, "maxDurationMs": 120000 },

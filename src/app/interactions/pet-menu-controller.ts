@@ -1,7 +1,11 @@
-import type { CareAction, PetCareState } from "../care/care-state";
 import type { PersonalityMode } from "../personality/profiles";
 
-export type PetMenuAction = CareAction | "wake";
+export type PetMenuAction =
+  | "pet"
+  | "feed"
+  | "play"
+  | "sleep"
+  | "wake";
 
 export interface PetMenuPet {
   id: string;
@@ -15,7 +19,6 @@ export interface PetMenuState {
   testModeEnabled: boolean;
   paused: boolean;
   sleeping: boolean;
-  care: PetCareState;
 }
 
 export interface PetMenuControllerDependencies {
@@ -24,8 +27,6 @@ export interface PetMenuControllerDependencies {
   requestAction(action: string): boolean;
   requestWake(): boolean;
   isSleeping(): boolean;
-  applyCare(action: CareAction): PetCareState;
-  persist(): Promise<void>;
 }
 
 export class PetMenuController {
@@ -60,8 +61,6 @@ export class PetMenuController {
     }
     if (!this.dependencies.requestAction(behaviorId)) return false;
 
-    this.dependencies.applyCare(action);
-    await this.dependencies.persist();
     return true;
   }
 }

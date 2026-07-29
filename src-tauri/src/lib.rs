@@ -41,6 +41,7 @@ pub fn run() {
             tray::configure_tray,
             window::cursor_position,
             window::move_pet_window,
+            window::resize_and_move_pet_window,
             window::resize_pet_window,
             window::set_pet_visible
         ])

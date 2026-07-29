@@ -26,7 +26,7 @@ function inside(
   );
 }
 
-export function identifyYingBodyZone(point: Point): BodyZone | null {
+export function identifyPetBodyZone(point: Point): BodyZone | null {
   if (inside(point, 0.72, 0.48, 1, 0.9)) return "tail";
   if (inside(point, 0.32, 0.25, 0.7, 0.44)) return "chin";
   if (inside(point, 0.18, 0.04, 0.82, 0.38)) return "head";

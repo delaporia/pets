@@ -2,7 +2,8 @@ export type PrimaryInteraction =
   | "touch"
   | "feed"
   | "play"
-  | "companion";
+  | "sleep"
+  | "wake";
 
 export type SecondaryInteraction =
   | "treat"
@@ -10,9 +11,7 @@ export type SecondaryInteraction =
   | "can"
   | "ball"
   | "butterfly"
-  | "wand"
-  | "sleep"
-  | "wake";
+  | "wand";
 
 export type InteractionWheelPhase =
   | "closed"
@@ -31,30 +30,27 @@ const primaryOptions: PrimaryInteraction[] = [
   "touch",
   "feed",
   "play",
-  "companion",
+  "sleep",
+  "wake",
 ];
 
 const secondaryOptions: Record<
-  Exclude<PrimaryInteraction, "touch">,
+  Extract<PrimaryInteraction, "feed" | "play">,
   SecondaryInteraction[]
 > = {
   feed: ["treat", "kibble", "can"],
-  play: ["ball", "wand", "butterfly"],
-  companion: ["sleep", "wake"],
-};
-
-const unlockAt: Partial<Record<SecondaryInteraction, number>> = {
-  kibble: 10,
-  wand: 20,
-  can: 30,
-  butterfly: 30,
+  play: ["butterfly", "ball", "wand"],
 };
 
 export class InteractionWheelModel {
   private phase: InteractionWheelPhase = "closed";
   private primary: PrimaryInteraction | null = null;
 
-  constructor(private readonly getAffection: () => number = () => 0) {}
+  constructor(
+    private readonly isAvailable: (
+      option: PrimaryInteraction | SecondaryInteraction,
+    ) => boolean = (option) => option !== "wake",
+  ) {}
 
   open(): void {
     this.phase = "primary";
@@ -65,7 +61,11 @@ export class InteractionWheelModel {
     if (this.phase !== "primary") return;
     this.primary = primary;
     this.phase =
-      primary === "touch" ? "body-interaction" : "secondary";
+      primary === "touch"
+        ? "body-interaction"
+        : primary === "sleep" || primary === "wake"
+          ? "performing"
+          : "secondary";
   }
 
   back(): void {
@@ -97,7 +97,7 @@ export class InteractionWheelModel {
       return {
         phase: this.phase,
         primary: null,
-        options: [...primaryOptions],
+        options: primaryOptions.filter(this.isAvailable),
       };
     }
     if (
@@ -115,8 +115,8 @@ export class InteractionWheelModel {
       phase: this.phase,
       primary: this.primary,
       options: secondaryOptions[
-        this.primary as Exclude<PrimaryInteraction, "touch">
-      ].filter((option) => this.getAffection() >= (unlockAt[option] ?? 0)),
+        this.primary as Extract<PrimaryInteraction, "feed" | "play">
+      ].filter(this.isAvailable),
     };
   }
 }

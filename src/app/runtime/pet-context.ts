@@ -33,7 +33,6 @@ export interface PetContext {
   activityAnchor: Point | null;
   roamingHalfWidth: number;
   behaviorProfile: BehaviorProfile;
-  careState: PetCareState;
   elapsedMs: number;
   cooldowns: CooldownLedger;
   personalityMode: import("../personality/profiles").PersonalityMode;
@@ -80,4 +79,3 @@ export function clampActivityAnchor(context: PetContext): void {
 }
 import type { CooldownLedger } from "../behaviors/cooldown-ledger";
 import type { BehaviorProfile } from "../pets/schemas";
-import type { PetCareState } from "../care/care-state";

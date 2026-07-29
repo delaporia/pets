@@ -127,36 +127,6 @@ const legacySemanticActions: z.input<typeof semanticActionsSchema> = {
   land: { loop: "idle" },
 };
 
-const onceAutonomousActionSchema = z
-  .object({
-    capability: z.string().min(1),
-    playback: z.literal("once"),
-  })
-  .strict();
-
-const timedAutonomousActionSchema = z
-  .object({
-    capability: z.string().min(1),
-    playback: z.literal("timed"),
-    minDurationMs: positiveInteger,
-    maxDurationMs: positiveInteger,
-  })
-  .strict()
-  .superRefine((action, context) => {
-    if (action.maxDurationMs < action.minDurationMs) {
-      context.addIssue({
-        code: "custom",
-        path: ["maxDurationMs"],
-        message: "must be greater than or equal to minDurationMs",
-      });
-    }
-  });
-
-export const autonomousActionSchema = z.union([
-  onceAutonomousActionSchema,
-  timedAutonomousActionSchema,
-]);
-
 export const behaviorCategorySchema = z.enum([
   "movement",
   "ambient",
@@ -335,6 +305,7 @@ const petManifestBaseSchema = z
     displayName: z.string().min(1),
     description: z.string().default(""),
     spriteVersionNumber: z.literal(2),
+    sceneEngine: z.literal("realtime-v1").optional(),
     display: z
       .object({
         scale: z.number().positive(),
@@ -394,7 +365,6 @@ const petManifestBaseSchema = z
         interactionTimelineDefinitionSchema,
       )
       .default({}),
-    autonomousActions: z.array(autonomousActionSchema).default([]),
     behaviorProfile: behaviorProfileSchema.default(defaultBehaviorProfile),
   })
   .strict();
@@ -523,25 +493,6 @@ export const petManifestSchema = petManifestBaseSchema.superRefine(
       });
     }
 
-    const scheduledCapabilities = new Set<string>();
-    pet.autonomousActions.forEach((action, index) => {
-      if (!pet.capabilities[action.capability]) {
-        context.addIssue({
-          code: "custom",
-          path: ["autonomousActions", index, "capability"],
-          message: `unknown capability "${action.capability}"`,
-        });
-      }
-      if (scheduledCapabilities.has(action.capability)) {
-        context.addIssue({
-          code: "custom",
-          path: ["autonomousActions", index, "capability"],
-          message: "autonomous action capabilities must be unique",
-        });
-      }
-      scheduledCapabilities.add(action.capability);
-    });
-
     pet.behaviorProfile.actions.forEach((action, index) => {
       if (!pet.capabilities[action.capability]) {
         context.addIssue({
@@ -615,7 +566,6 @@ export type InteractionTimelineStage = z.infer<
 export type InteractionTimelineDefinition = z.infer<
   typeof interactionTimelineDefinitionSchema
 >;
-export type AutonomousAction = z.infer<typeof autonomousActionSchema>;
 export type BehaviorCategory = z.infer<typeof behaviorCategorySchema>;
 export type BehaviorAction = z.infer<typeof behaviorActionSchema>;
 export type BehaviorProfile = z.infer<typeof behaviorProfileSchema>;

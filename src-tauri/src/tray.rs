@@ -28,6 +28,7 @@ pub struct TrayState {
     pub personality_mode: PersonalityMode,
     pub test_mode_enabled: bool,
     pub paused: bool,
+    pub sleeping: bool,
     pub visible: bool,
     pub autostart: bool,
     pub pet_scale: f64,
@@ -50,6 +51,28 @@ pub fn menu_model(state: &TrayState) -> Vec<MenuDescriptor> {
             checked: Some(pet.id == state.selected_pet_id),
         })
         .collect::<Vec<_>>();
+    items.extend([
+        MenuDescriptor {
+            id: "interaction:pet".into(),
+            checked: None,
+        },
+        MenuDescriptor {
+            id: "interaction:feed".into(),
+            checked: None,
+        },
+        MenuDescriptor {
+            id: "interaction:play".into(),
+            checked: None,
+        },
+        MenuDescriptor {
+            id: if state.sleeping {
+                "interaction:wake".into()
+            } else {
+                "interaction:sleep".into()
+            },
+            checked: None,
+        },
+    ]);
     for mode in [
         PersonalityMode::Quiet,
         PersonalityMode::Balanced,
@@ -186,6 +209,29 @@ fn build_menu(app: &AppHandle, state: &TrayState) -> Result<BuiltMenu, AppError>
         pet_checks.push((pet.id.clone(), item));
     }
     menu.append(&pets)?;
+    let interactions = Submenu::with_id(app, "interactions", "宠物互动", true)?;
+    for (id, label) in [
+        ("interaction:pet", "抚摸"),
+        ("interaction:feed", "喂食"),
+        ("interaction:play", "玩耍"),
+        (
+            if state.sleeping {
+                "interaction:wake"
+            } else {
+                "interaction:sleep"
+            },
+            if state.sleeping { "唤醒" } else { "睡觉" },
+        ),
+    ] {
+        interactions.append(&MenuItem::with_id(
+            app,
+            id,
+            label,
+            true,
+            None::<&str>,
+        )?)?;
+    }
+    menu.append(&interactions)?;
     let personalities = Submenu::with_id(app, "personalities", "性格模式", true)?;
     let mut personality_modes = vec![
         (PersonalityMode::Quiet, "安静陪伴"),
@@ -312,6 +358,8 @@ pub fn configure_tray(
                             item.set_checked(checked)
                         });
                         let _ = app.emit("tray://select-pet", pet_id.to_string());
+                    } else if let Some(action) = id.strip_prefix("interaction:") {
+                        let _ = app.emit("tray://pet-action", action.to_string());
                     } else if let Some(mode) = id.strip_prefix("personality:") {
                         let controller = app.state::<TrayController>();
                         let checks = controller
@@ -372,6 +420,10 @@ mod tests {
                     display_name: "Wuyi".into(),
                 },
                 TrayPet {
+                    id: "wuyiyi".into(),
+                    display_name: "Wuyiyi".into(),
+                },
+                TrayPet {
                     id: "placeholder".into(),
                     display_name: "Placeholder".into(),
                 },
@@ -380,6 +432,7 @@ mod tests {
             personality_mode: PersonalityMode::Balanced,
             test_mode_enabled: false,
             paused: false,
+            sleeping: false,
             visible: true,
             autostart: true,
             pet_scale: 1.0,
@@ -395,6 +448,34 @@ mod tests {
         assert!(items.iter().any(|item| {
             item.id == "pet:placeholder" && item.checked == Some(false)
         }));
+        assert!(items.iter().any(|item| {
+            item.id == "pet:wuyiyi" && item.checked == Some(false)
+        }));
+        assert_eq!(
+            items
+                .iter()
+                .filter(|item| {
+                    item.id.starts_with("pet:")
+                        && item.checked == Some(true)
+                })
+                .count(),
+            1
+        );
+    }
+
+    #[test]
+    fn includes_pet_interaction_commands() {
+        let items = menu_model(&state());
+        for id in ["interaction:pet", "interaction:feed", "interaction:play", "interaction:sleep"] {
+            assert!(items.iter().any(|item| item.id == id));
+        }
+
+        let sleeping = menu_model(&TrayState {
+            sleeping: true,
+            ..state()
+        });
+        assert!(sleeping.iter().any(|item| item.id == "interaction:wake"));
+        assert!(!sleeping.iter().any(|item| item.id == "interaction:sleep"));
     }
 
     #[test]

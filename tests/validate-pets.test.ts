@@ -111,20 +111,20 @@ describe("validatePets", () => {
     expect(result.errors.join("\n")).toMatch(/visualBounds.*atlas cell/i);
   });
 
-  it("reports autonomous actions that reference missing capabilities", async () => {
+  it("reports the removed autonomousActions field", async () => {
     const root = await fixture();
     await writeFile(
       join(root, "pet", "pet.json"),
       JSON.stringify({
         ...manifest,
-        autonomousActions: [{ capability: "wave", playback: "once" }],
+        autonomousActions: [],
       }),
     );
 
     const result = await validatePets(root);
 
     expect(result.errors.join("\n")).toMatch(
-      /autonomousActions\.0\.capability.*unknown capability/i,
+      /autonomousActions/i,
     );
   });
 

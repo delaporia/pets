@@ -53,6 +53,21 @@ describe("PointerGestureTracker", () => {
     expect(tracker.end(8)).toBe("ignored");
   });
 
+  it("does not let a second pointer replace an active gesture", () => {
+    const tracker = new PointerGestureTracker(6);
+    expect(tracker.down(7, { x: 10, y: 10 })).toBe("pending");
+    expect(
+      tracker.down(
+        8,
+        { x: 30, y: 10 },
+        { button: 2, scaleFactor: 1 },
+      ),
+    ).toBe("ignored");
+
+    expect(tracker.move(7, { x: 30, y: 10 })).toBe("drag-start");
+    expect(tracker.end(7)).toBe("drag-end");
+  });
+
   it("cancels without emitting a click", () => {
     const tracker = new PointerGestureTracker(6);
     tracker.down(7, { x: 10, y: 10 });

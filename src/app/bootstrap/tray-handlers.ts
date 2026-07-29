@@ -1,6 +1,7 @@
 import type { UserSettings } from "../config/settings";
 import type { PetScale, TrayHandlers } from "../native/tray-client";
 import type { PersonalityMode } from "../personality/profiles";
+import type { PetMenuAction } from "../interactions/pet-menu-controller";
 
 export interface TrayHandlerDependencies {
   getSettings(): UserSettings;
@@ -11,6 +12,7 @@ export interface TrayHandlerDependencies {
   setAutostart(enabled: boolean): Promise<void>;
   setPersonality(mode: PersonalityMode): void;
   setScale(scale: PetScale): Promise<void>;
+  performPetAction(action: PetMenuAction): Promise<boolean>;
   refreshTray(): Promise<void>;
 }
 
@@ -51,6 +53,10 @@ export function createTrayHandlers(
         ...dependencies.getSettings(),
         petScale,
       });
+    },
+    async petAction(action) {
+      await dependencies.performPetAction(action);
+      await dependencies.refreshTray();
     },
     async pause() {
       const activityPaused = !dependencies.getSettings().activityPaused;

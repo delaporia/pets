@@ -1,6 +1,5 @@
 import { z } from "zod";
 import { personalityModes } from "../personality/profiles";
-import { petCareStateSchema } from "../care/care-state";
 
 export const userSettingsSchema = z
   .object({
@@ -10,14 +9,14 @@ export const userSettingsSchema = z
     activityPaused: z.boolean(),
     visible: z.boolean(),
     autostart: z.boolean(),
-    careModelVersion: z.union([z.literal(1), z.literal(2)]).default(1),
-    petScale: z.union([
-      z.literal(0.75),
-      z.literal(1),
-      z.literal(1.25),
-      z.literal(1.5),
-    ]).default(1),
-    careByPet: z.record(z.string().min(1), petCareStateSchema).default({}),
+    petScale: z
+      .union([
+        z.literal(0.75),
+        z.literal(1),
+        z.literal(1.25),
+        z.literal(1.5),
+      ])
+      .default(1),
   })
   .strict();
 
@@ -31,28 +30,27 @@ export function defaultUserSettings(): UserSettings {
     activityPaused: false,
     visible: true,
     autostart: true,
-    careModelVersion: 2,
     petScale: 1,
-    careByPet: {},
   };
 }
 
-export function migrateUserSettings(settings: UserSettings): UserSettings {
-  if (settings.careModelVersion >= 2) return settings;
-  return {
-    ...settings,
-    careModelVersion: 2,
-    careByPet: Object.fromEntries(
-      Object.entries(settings.careByPet).map(([petId, care]) => [
-        petId,
-        { ...care, affection: 0 },
-      ]),
-    ),
-  };
+export function migrateUserSettings(
+  settings: UserSettings,
+): UserSettings {
+  return settings;
 }
 
 export function parseUserSettings(input: unknown): UserSettings {
-  const result = userSettingsSchema.safeParse(input);
+  const legacyCompatible =
+    typeof input === "object" && input !== null
+      ? Object.fromEntries(
+          Object.entries(input).filter(
+            ([key]) =>
+              key !== "careModelVersion" && key !== "careByPet",
+          ),
+        )
+      : input;
+  const result = userSettingsSchema.safeParse(legacyCompatible);
   if (!result.success) {
     throw new Error(
       result.error.issues

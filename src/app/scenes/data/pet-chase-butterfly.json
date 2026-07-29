@@ -1,0 +1,12 @@
+{
+  "durationMs": 8200,
+  "beats": [
+    { "id": "butterfly-enter", "atMs": 0 },
+    { "id": "notice", "atMs": 700 },
+    { "id": "stalk", "atMs": 1500 },
+    { "id": "chase", "atMs": 2500 },
+    { "id": "pounce", "atMs": 5000 },
+    { "id": "ending", "atMs": 6000 },
+    { "id": "outro", "atMs": 6800 }
+  ]
+}

@@ -9,6 +9,7 @@ import {
   personalityModes,
   type PersonalityMode,
 } from "../personality/profiles";
+import type { PetMenuAction } from "../interactions/pet-menu-controller";
 
 export interface TrayPet {
   id: string;
@@ -21,6 +22,7 @@ export interface TrayState {
   personalityMode: PersonalityMode;
   testModeEnabled: boolean;
   paused: boolean;
+  sleeping: boolean;
   visible: boolean;
   autostart: boolean;
   petScale: PetScale;
@@ -42,6 +44,7 @@ export interface TrayHandlers {
   selectPet(id: string): void | Promise<void>;
   selectPersonality(mode: PersonalityMode): void | Promise<void>;
   selectScale(scale: PetScale): void | Promise<void>;
+  petAction(action: PetMenuAction): void | Promise<void>;
   pause(): void | Promise<void>;
   visibility(): void | Promise<void>;
   autostart(): void | Promise<void>;
@@ -100,6 +103,14 @@ export class TrayClient {
           petScales.includes(event.payload as PetScale)
         ) {
           void handlers.selectScale(event.payload as PetScale);
+        }
+      }),
+      this.listen("tray://pet-action", (event) => {
+        if (
+          typeof event.payload === "string" &&
+          ["pet", "feed", "play", "sleep", "wake"].includes(event.payload)
+        ) {
+          void handlers.petAction(event.payload as PetMenuAction);
         }
       }),
       this.listen("tray://visibility", () => {

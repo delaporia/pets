@@ -1,6 +1,7 @@
 {
   "schemaVersion": 1,
   "id": "wuyi",
+  "sceneEngine": "realtime-v1",
   "displayName": "五一",
   "description": "一只白色长毛、额头浅金灰纹、蓝绿色大眼睛，佩戴红色针织围脖和金色铜钱的可爱猫咪。",
   "spriteVersionNumber": 2,
@@ -135,7 +136,6 @@
     "pickedUp": { "loop": "pickedUpPose" },
     "land": { "loop": "landSoftly" }
   },
-  "autonomousActions": [],
   "behaviorProfile": {
     "scheduler": {
       "minIntervalMs": 9000,
@@ -155,6 +155,7 @@
       "social": 25
     },
     "actions": [
+      { "id": "walk-around", "capability": "walkRight", "category": "movement", "playback": "timed", "weight": 4, "cooldownMs": 10000, "minDurationMs": 2500, "maxDurationMs": 5000 },
       {
         "id": "look-around",
         "capability": "look",

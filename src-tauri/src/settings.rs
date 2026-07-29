@@ -1,6 +1,5 @@
 use crate::error::AppError;
 use serde::{Deserialize, Serialize};
-use std::collections::HashMap;
 use std::fs;
 use std::io::Write;
 use std::path::{Path, PathBuf};
@@ -18,15 +17,6 @@ pub enum PersonalityMode {
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 #[serde(rename_all = "camelCase")]
-pub struct PetCareState {
-    pub satiety: f64,
-    pub energy: f64,
-    pub affection: f64,
-    pub last_updated_at: f64,
-}
-
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
-#[serde(rename_all = "camelCase")]
 pub struct UserSettings {
     pub schema_version: u32,
     pub selected_pet_id: String,
@@ -35,20 +25,12 @@ pub struct UserSettings {
     pub activity_paused: bool,
     pub visible: bool,
     pub autostart: bool,
-    #[serde(default = "legacy_care_model_version")]
-    pub care_model_version: u32,
     #[serde(default = "default_pet_scale")]
     pub pet_scale: f64,
-    #[serde(default)]
-    pub care_by_pet: HashMap<String, PetCareState>,
 }
 
 fn default_pet_scale() -> f64 {
     1.0
-}
-
-fn legacy_care_model_version() -> u32 {
-    1
 }
 
 impl Default for UserSettings {
@@ -60,9 +42,7 @@ impl Default for UserSettings {
             activity_paused: false,
             visible: true,
             autostart: true,
-            care_model_version: 2,
             pet_scale: default_pet_scale(),
-            care_by_pet: HashMap::new(),
         }
     }
 }
@@ -75,37 +55,13 @@ pub fn parse_settings(json: &str) -> Result<UserSettings, AppError> {
             settings.schema_version
         )));
     }
-    validate_care_states(&settings)?;
+    validate_pet_scale(settings.pet_scale)?;
     Ok(settings)
 }
 
-fn validate_care_states(settings: &UserSettings) -> Result<(), AppError> {
-    if ![1, 2].contains(&settings.care_model_version) {
-        return Err(AppError::message("unsupported careModelVersion"));
-    }
-    if ![0.75, 1.0, 1.25, 1.5].contains(&settings.pet_scale) {
+fn validate_pet_scale(pet_scale: f64) -> Result<(), AppError> {
+    if ![0.75, 1.0, 1.25, 1.5].contains(&pet_scale) {
         return Err(AppError::message("petScale must be 0.75, 1, 1.25 or 1.5"));
-    }
-    for (pet_id, care) in &settings.care_by_pet {
-        if pet_id.is_empty() {
-            return Err(AppError::message("care pet id must not be empty"));
-        }
-        for (name, value) in [
-            ("satiety", care.satiety),
-            ("energy", care.energy),
-            ("affection", care.affection),
-        ] {
-            if !value.is_finite() || !(0.0..=100.0).contains(&value) {
-                return Err(AppError::message(format!(
-                    "{pet_id} care {name} must be between 0 and 100"
-                )));
-            }
-        }
-        if !care.last_updated_at.is_finite() || care.last_updated_at < 0.0 {
-            return Err(AppError::message(format!(
-                "{pet_id} care lastUpdatedAt must be non-negative"
-            )));
-        }
     }
     Ok(())
 }
@@ -194,7 +150,7 @@ pub fn write_settings(app: AppHandle, settings: UserSettings) -> Result<(), AppE
     if settings.schema_version != 1 {
         return Err(AppError::message("unsupported settings schema version"));
     }
-    validate_care_states(&settings)?;
+    validate_pet_scale(settings.pet_scale)?;
     let path = settings_path(&app)?;
     if let Some(parent) = path.parent() {
         fs::create_dir_all(parent)?;
@@ -222,7 +178,6 @@ mod tests {
         assert!(!settings.activity_paused);
         assert!(settings.visible);
         assert!(settings.autostart);
-        assert!(settings.care_by_pet.is_empty());
     }
 
     #[test]
@@ -258,11 +213,10 @@ mod tests {
         }"#;
         let settings = parse_settings(json).expect("legacy settings");
         assert_eq!(settings.personality_mode, PersonalityMode::Balanced);
-        assert!(settings.care_by_pet.is_empty());
     }
 
     #[test]
-    fn parses_independent_pet_care_state() {
+    fn ignores_removed_legacy_care_state() {
         let json = r#"{
           "schemaVersion": 1,
           "selectedPetId": "wuyi",
@@ -279,12 +233,8 @@ mod tests {
             }
           }
         }"#;
-        let settings = parse_settings(json).expect("care settings");
-        let care = settings.care_by_pet.get("wuyi").expect("wuyi care");
-        assert_eq!(care.satiety, 72.5);
-        assert_eq!(care.energy, 64.0);
-        assert_eq!(care.affection, 81.0);
-        assert_eq!(care.last_updated_at, 1234.0);
+        let settings = parse_settings(json).expect("legacy settings");
+        assert_eq!(settings.selected_pet_id, "wuyi");
     }
 
     #[test]

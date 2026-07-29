@@ -89,15 +89,6 @@ const validPet = {
     pickedUp: { loop: "idle" },
     land: { loop: "idle" },
   },
-  autonomousActions: [
-    { capability: "wave", playback: "once" },
-    {
-      capability: "observe",
-      playback: "timed",
-      minDurationMs: 2_000,
-      maxDurationMs: 5_000,
-    },
-  ],
 };
 
 const behaviorProfile = {
@@ -153,6 +144,15 @@ const behaviorProfile = {
 };
 
 describe("pet manifest schema", () => {
+  it("accepts an opt-in realtime scene engine", () => {
+    const parsed = parsePetManifest({
+      ...validPet,
+      sceneEngine: "realtime-v1",
+    });
+
+    expect(parsed.sceneEngine).toBe("realtime-v1");
+  });
+
   it("requires the complete shared semantic action contract", () => {
     const parsed = parsePetManifest(validPet);
 
@@ -323,47 +323,13 @@ describe("pet manifest schema", () => {
     ).toThrow(/animations\.idle\.frames/);
   });
 
-  it("accepts once and timed autonomous actions", () => {
-    expect(parsePetManifest(validPet).autonomousActions).toEqual(
-      validPet.autonomousActions,
-    );
-  });
-
-  it("rejects an autonomous action with a missing capability", () => {
+  it("rejects the removed autonomousActions field", () => {
     expect(() =>
       parsePetManifest({
         ...validPet,
-        autonomousActions: [{ capability: "missing", playback: "once" }],
+        autonomousActions: [{ capability: "wave", playback: "once" }],
       }),
-    ).toThrow(/autonomousActions\.0\.capability/);
-  });
-
-  it("rejects duplicate autonomous capabilities", () => {
-    expect(() =>
-      parsePetManifest({
-        ...validPet,
-        autonomousActions: [
-          { capability: "wave", playback: "once" },
-          { capability: "wave", playback: "once" },
-        ],
-      }),
-    ).toThrow(/unique/);
-  });
-
-  it("rejects a timed action whose maximum is below its minimum", () => {
-    expect(() =>
-      parsePetManifest({
-        ...validPet,
-        autonomousActions: [
-          {
-            capability: "observe",
-            playback: "timed",
-            minDurationMs: 5_000,
-            maxDurationMs: 2_000,
-          },
-        ],
-      }),
-    ).toThrow(/maxDurationMs/);
+    ).toThrow(/autonomousActions/);
   });
 
   it("accepts a per-pet desktop behavior profile", () => {

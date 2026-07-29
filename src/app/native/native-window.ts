@@ -1,6 +1,7 @@
 import { invoke as tauriInvoke } from "@tauri-apps/api/core";
 import type { WorkArea } from "../runtime/pet-context";
 import type { PetMenuState } from "../interactions/pet-menu-controller";
+import type { Rect } from "../stage/geometry";
 
 export type InvokeFn = (
   command: string,
@@ -39,6 +40,10 @@ export class NativeWindow {
 
   async resize(width: number, height: number): Promise<void> {
     await this.invoke("resize_pet_window", { width, height });
+  }
+
+  async resizeAndMove(bounds: Rect): Promise<void> {
+    await this.invoke("resize_and_move_pet_window", { ...bounds });
   }
 
   async setVisible(visible: boolean): Promise<void> {

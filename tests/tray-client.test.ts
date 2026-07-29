@@ -11,6 +11,7 @@ const state: TrayState = {
   personalityMode: "balanced",
   testModeEnabled: false,
   paused: false,
+  sleeping: false,
   visible: true,
   autostart: true,
   petScale: 1,
@@ -36,6 +37,7 @@ describe("TrayClient", () => {
     const pause = vi.fn();
     const selectPersonality = vi.fn();
     const selectScale = vi.fn();
+    const petAction = vi.fn();
     const client = new TrayClient({
       invoke: vi.fn(async () => undefined),
       listen,
@@ -45,6 +47,7 @@ describe("TrayClient", () => {
       selectPet,
       selectPersonality,
       selectScale,
+      petAction,
       pause,
       visibility: vi.fn(),
       autostart: vi.fn(),
@@ -53,11 +56,13 @@ describe("TrayClient", () => {
     listeners.get("tray://pause")?.({ payload: null });
     listeners.get("tray://select-personality")?.({ payload: "lively" });
     listeners.get("tray://select-scale")?.({ payload: 1.25 });
+    listeners.get("tray://pet-action")?.({ payload: "sleep" });
 
     expect(selectPet).toHaveBeenCalledWith("placeholder");
     expect(pause).toHaveBeenCalledOnce();
     expect(selectPersonality).toHaveBeenCalledWith("lively");
     expect(selectScale).toHaveBeenCalledWith(1.25);
+    expect(petAction).toHaveBeenCalledWith("sleep");
     dispose();
     expect(listeners.size).toBe(0);
   });

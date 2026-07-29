@@ -15,14 +15,6 @@ pub struct MenuPet {
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
-pub struct CareSummary {
-    pub satiety: f64,
-    pub energy: f64,
-    pub affection: f64,
-}
-
-#[derive(Debug, Clone, Serialize, Deserialize)]
-#[serde(rename_all = "camelCase")]
 pub struct PetMenuState {
     pub pets: Vec<MenuPet>,
     pub selected_pet_id: String,
@@ -30,7 +22,6 @@ pub struct PetMenuState {
     pub test_mode_enabled: bool,
     pub paused: bool,
     pub sleeping: bool,
-    pub care: CareSummary,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -42,31 +33,16 @@ struct MenuDescriptor {
 
 fn menu_model(state: &PetMenuState) -> Vec<MenuDescriptor> {
     let mut items = vec![
-        descriptor("care:pet", "抚摸", None),
-        descriptor("care:feed", "喂食", None),
-        descriptor("care:play", "玩耍", None),
+        descriptor("interaction:pet", "抚摸", None),
+        descriptor("interaction:feed", "喂食", None),
+        descriptor("interaction:play", "玩耍", None),
         descriptor(
             if state.sleeping {
-                "care:wake"
+                "interaction:wake"
             } else {
-                "care:sleep"
+                "interaction:sleep"
             },
             if state.sleeping { "唤醒" } else { "睡觉" },
-            None,
-        ),
-        descriptor(
-            "status:satiety",
-            &format!("饱腹度  {:.0}", state.care.satiety),
-            None,
-        ),
-        descriptor(
-            "status:energy",
-            &format!("精力  {:.0}", state.care.energy),
-            None,
-        ),
-        descriptor(
-            "status:affection",
-            &format!("亲密度  {:.0}", state.care.affection),
             None,
         ),
     ];
@@ -124,14 +100,14 @@ fn context_id(id: &str) -> String {
 fn build_menu(app: &AppHandle, state: &PetMenuState) -> Result<Menu<tauri::Wry>, AppError> {
     let menu = Menu::new(app)?;
     for (id, label) in [
-        ("care:pet", "抚摸"),
-        ("care:feed", "喂食"),
-        ("care:play", "玩耍"),
+        ("interaction:pet", "抚摸"),
+        ("interaction:feed", "喂食"),
+        ("interaction:play", "玩耍"),
         (
             if state.sleeping {
-                "care:wake"
+                "interaction:wake"
             } else {
-                "care:sleep"
+                "interaction:sleep"
             },
             if state.sleeping { "唤醒" } else { "睡觉" },
         ),
@@ -233,7 +209,7 @@ pub fn handle_menu_event(app: &AppHandle, event: tauri::menu::MenuEvent) {
     let Some(id) = event.id().as_ref().strip_prefix("pet-menu:") else {
         return;
     };
-    if let Some(action) = id.strip_prefix("care:") {
+    if let Some(action) = id.strip_prefix("interaction:") {
         let _ = app.emit("pet-menu://action", action.to_string());
     } else if let Some(pet_id) = id.strip_prefix("pet:") {
         let _ = app.emit("tray://select-pet", pet_id.to_string());
@@ -274,41 +250,28 @@ mod tests {
             test_mode_enabled: false,
             paused: false,
             sleeping: false,
-            care: CareSummary {
-                satiety: 72.0,
-                energy: 64.0,
-                affection: 81.0,
-            },
         }
     }
 
     #[test]
-    fn includes_care_actions_and_current_status() {
+    fn includes_interaction_actions_without_numeric_status() {
         let items = menu_model(&state());
 
-        assert!(items.iter().any(|item| item.id == "care:feed"));
-        assert!(items
-            .iter()
-            .any(|item| item.id == "status:satiety" && item.label.contains("72")));
-        assert!(items
-            .iter()
-            .any(|item| item.id == "status:energy" && item.label.contains("64")));
-        assert!(items
-            .iter()
-            .any(|item| item.id == "status:affection" && item.label.contains("81")));
+        assert!(items.iter().any(|item| item.id == "interaction:feed"));
+        assert!(!items.iter().any(|item| item.id.starts_with("status:")));
     }
 
     #[test]
     fn offers_sleep_or_wake_according_to_runtime_state() {
         let awake = menu_model(&state());
-        assert!(awake.iter().any(|item| item.id == "care:sleep"));
+        assert!(awake.iter().any(|item| item.id == "interaction:sleep"));
 
         let sleeping = menu_model(&PetMenuState {
             sleeping: true,
             ..state()
         });
-        assert!(sleeping.iter().any(|item| item.id == "care:wake"));
-        assert!(!sleeping.iter().any(|item| item.id == "care:sleep"));
+        assert!(sleeping.iter().any(|item| item.id == "interaction:wake"));
+        assert!(!sleeping.iter().any(|item| item.id == "interaction:sleep"));
     }
 
     #[test]

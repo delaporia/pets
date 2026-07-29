@@ -29,22 +29,18 @@ describe("user settings", () => {
   it("migrates legacy settings to balanced mode", () => {
     const legacy = { ...defaultUserSettings() } as Record<string, unknown>;
     delete legacy.personalityMode;
-    delete legacy.careByPet;
     delete legacy.petScale;
-    delete legacy.careModelVersion;
 
     expect(parseUserSettings(legacy)).toMatchObject({
       personalityMode: "balanced",
-      careByPet: {},
       petScale: 1,
-      careModelVersion: 1,
     });
   });
 
-  it("resets the old provisional affection baseline only once", () => {
-    const legacy = parseUserSettings({
+  it("accepts and removes legacy care data during upgrades", () => {
+    const parsed = parseUserSettings({
       ...defaultUserSettings(),
-      careModelVersion: 1,
+      careModelVersion: 3,
       careByPet: {
         ying: {
           satiety: 80,
@@ -55,11 +51,9 @@ describe("user settings", () => {
       },
     });
 
-    const migrated = migrateUserSettings(legacy);
-
-    expect(migrated.careModelVersion).toBe(2);
-    expect(migrated.careByPet.ying?.affection).toBe(0);
-    expect(migrateUserSettings(migrated)).toBe(migrated);
+    expect(parsed).not.toHaveProperty("careModelVersion");
+    expect(parsed).not.toHaveProperty("careByPet");
+    expect(migrateUserSettings(parsed)).toBe(parsed);
   });
 
   it("accepts supported pet scales and rejects arbitrary values", () => {
@@ -71,44 +65,6 @@ describe("user settings", () => {
     ).toThrow(/petScale/);
   });
 
-  it("persists valid care state independently for each pet", () => {
-    const parsed = parseUserSettings({
-      ...defaultUserSettings(),
-      careByPet: {
-        wuyi: {
-          satiety: 72,
-          energy: 64,
-          affection: 81,
-          lastUpdatedAt: 1234,
-        },
-        ying: {
-          satiety: 45,
-          energy: 90,
-          affection: 55,
-          lastUpdatedAt: 5678,
-        },
-      },
-    });
-
-    expect(parsed.careByPet.wuyi?.affection).toBe(81);
-    expect(parsed.careByPet.ying?.satiety).toBe(45);
-  });
-
-  it("rejects care values outside the supported range", () => {
-    expect(() =>
-      parseUserSettings({
-        ...defaultUserSettings(),
-        careByPet: {
-          wuyi: {
-            satiety: 101,
-            energy: 50,
-            affection: 50,
-            lastUpdatedAt: 0,
-          },
-        },
-      }),
-    ).toThrow(/careByPet\.wuyi\.satiety/);
-  });
 });
 
 describe("Tauri adapters", () => {
@@ -146,12 +102,12 @@ describe("Tauri adapters", () => {
       testModeEnabled: false,
       paused: false,
       sleeping: false,
-      care: {
-        satiety: 80,
-        energy: 70,
-        affection: 60,
-        lastUpdatedAt: 1000,
-      },
+    });
+    await window.resizeAndMove({
+      x: 220,
+      y: 480,
+      width: 360,
+      height: 240,
     });
 
     expect(invoke).toHaveBeenNthCalledWith(1, "move_pet_window", {
@@ -184,13 +140,17 @@ describe("Tauri adapters", () => {
         testModeEnabled: false,
         paused: false,
         sleeping: false,
-        care: {
-          satiety: 80,
-          energy: 70,
-          affection: 60,
-          lastUpdatedAt: 1000,
-        },
       },
     });
+    expect(invoke).toHaveBeenNthCalledWith(
+      7,
+      "resize_and_move_pet_window",
+      {
+        x: 220,
+        y: 480,
+        width: 360,
+        height: 240,
+      },
+    );
   });
 });

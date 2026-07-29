@@ -7,48 +7,58 @@ import pawIcon from "../../icons/twemoji/1f43e.svg";
 import bowlIcon from "../../icons/twemoji/1f963.svg";
 import yarnIcon from "../../icons/twemoji/1f9f6.svg";
 import moonIcon from "../../icons/twemoji/1f319.svg";
-import treatIcon from "../../icons/twemoji/1f365.svg";
 import canIcon from "../../icons/twemoji/1f96b.svg";
-import butterflyIcon from "../../icons/twemoji/1f98b.svg";
 import wandIcon from "../../icons/twemoji/1fa84.svg";
 import sunIcon from "../../icons/twemoji/2600.svg";
+import feedIcon from "../../icons/delaporia/feed.png";
+import playIcon from "../../icons/delaporia/play.png";
+import treatProductIcon from "../../icons/delaporia/treat.png";
+import butterflyProductIcon from "../../icons/delaporia/butterfly.png";
+import { interactionWheelLayout } from "./interaction-wheel-layout";
 
 export interface InteractionWheelViewOptions {
   enterBodyInteraction?(): void;
+  selectPrimary?(
+    option: PrimaryInteraction,
+  ): void | Promise<void>;
   select?(option: SecondaryInteraction): void | Promise<void>;
   close?(): void;
-  getAffection?(): number;
+  isAvailable?(
+    option: PrimaryInteraction | SecondaryInteraction,
+  ): boolean;
 }
 
 const labels: Record<PrimaryInteraction | SecondaryInteraction, string> = {
   touch: "亲近",
   feed: "喂食",
   play: "玩耍",
-  companion: "陪伴",
+  sleep: "睡觉",
+  wake: "唤醒",
   treat: "猫条",
   kibble: "猫粮",
   can: "罐罐",
   ball: "玩球",
   butterfly: "追蝴蝶",
   wand: "逗猫棒",
-  sleep: "睡觉",
-  wake: "唤醒",
 };
 
 const iconUrls: Record<PrimaryInteraction | SecondaryInteraction, string> = {
   touch: pawIcon,
-  feed: bowlIcon,
-  play: yarnIcon,
-  companion: moonIcon,
-  treat: treatIcon,
+  feed: feedIcon,
+  play: playIcon,
+  sleep: moonIcon,
+  wake: sunIcon,
+  treat: treatProductIcon,
   kibble: bowlIcon,
   can: canIcon,
   ball: yarnIcon,
-  butterfly: butterflyIcon,
+  butterfly: butterflyProductIcon,
   wand: wandIcon,
-  sleep: moonIcon,
-  wake: sunIcon,
 };
+
+const productIconOptions = new Set<
+  PrimaryInteraction | SecondaryInteraction
+>(["feed", "play", "treat", "butterfly"]);
 
 export class InteractionWheelView {
   private readonly model: InteractionWheelModel;
@@ -59,7 +69,7 @@ export class InteractionWheelView {
     private readonly options: InteractionWheelViewOptions = {},
   ) {
     this.model = new InteractionWheelModel(
-      options.getAffection ?? (() => 0),
+      options.isAvailable ?? ((option) => option !== "wake"),
     );
   }
 
@@ -86,8 +96,21 @@ export class InteractionWheelView {
   }
 
   private choosePrimary(primary: PrimaryInteraction): void {
+    this.clearTimer();
     this.root.dataset.transition = "leaving";
     this.transitionTimer = window.setTimeout(() => {
+      if (
+        (primary === "sleep" || primary === "wake") &&
+        this.options.selectPrimary
+      ) {
+        this.model.close();
+        this.render();
+        this.options.close?.();
+        void Promise.resolve(
+          this.options.selectPrimary(primary),
+        ).catch(() => undefined);
+        return;
+      }
       this.model.choosePrimary(primary);
       this.render("entering");
       if (primary === "touch") {
@@ -139,18 +162,34 @@ export class InteractionWheelView {
       back.addEventListener("click", () => this.back());
       this.root.append(back);
     }
+    const placements =
+      snapshot.phase === "primary" || snapshot.phase === "secondary"
+        ? interactionWheelLayout(
+            snapshot.phase,
+            snapshot.options.length,
+            this.root.dataset.side === "left" ? "left" : "right",
+          )
+        : [];
     snapshot.options.forEach((option, index) => {
       const button = document.createElement("button");
       button.type = "button";
       button.className = "interaction-orb";
       button.dataset.option = option;
       button.style.setProperty("--orb-index", String(index));
+      const placement = placements[index];
+      if (placement) {
+        button.style.setProperty("--orb-x", `${placement.x}px`);
+        button.style.setProperty("--orb-y", `${placement.y}px`);
+      }
       button.setAttribute("aria-label", labels[option]);
       button.title = labels[option];
       const icon = document.createElement("img");
       icon.alt = "";
       icon.draggable = false;
       icon.src = iconUrls[option];
+      if (productIconOptions.has(option)) {
+        icon.dataset.iconSet = "delaporia-v1";
+      }
       button.append(icon);
       if (snapshot.phase === "primary") {
         button.addEventListener("click", () =>

@@ -16,6 +16,7 @@ function fixture() {
     setAutostart: vi.fn(async () => undefined),
     setPersonality: vi.fn(),
     setScale: vi.fn(async () => undefined),
+    performPetAction: vi.fn(async () => true),
     refreshTray: vi.fn(async () => undefined),
   };
   return { dependencies, getSettings: () => settings };
@@ -105,5 +106,15 @@ describe("tray runtime handlers", () => {
 
     expect(f.dependencies.setScale).toHaveBeenCalledWith(1.25);
     expect(f.getSettings().petScale).toBe(1.25);
+  });
+
+  it("routes status-bar pet interactions through the active session", async () => {
+    const f = fixture();
+    const handlers = createTrayHandlers(f.dependencies);
+
+    await handlers.petAction("sleep");
+
+    expect(f.dependencies.performPetAction).toHaveBeenCalledWith("sleep");
+    expect(f.dependencies.refreshTray).toHaveBeenCalledOnce();
   });
 });

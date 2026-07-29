@@ -34,6 +34,9 @@ export class PointerGestureTracker {
     point: Point,
     options: PointerDownOptions = { button: 0, scaleFactor: 1 },
   ): PointerDownResult {
+    if (this.pointerId !== undefined) {
+      return "ignored";
+    }
     if (options.button === 2) {
       this.reset();
       return "context-menu";

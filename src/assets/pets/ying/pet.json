@@ -4,6 +4,7 @@
   "displayName": "瑛",
   "description": "好奇淘气的奶油白长毛猫，喜欢追逐鼠标、扑玩具，也会用不同反应回应触摸。",
   "spriteVersionNumber": 2,
+  "sceneEngine": "realtime-v1",
   "display": {
     "scale": 0.6,
     "visualBounds": { "left": 5, "top": 3, "right": 187, "bottom": 203 },
@@ -183,12 +184,12 @@
       ]
     }
   },
-  "autonomousActions": [],
   "behaviorProfile": {
     "scheduler": { "minIntervalMs": 7000, "maxIntervalMs": 14000, "recoveryMs": 6000 },
     "movement": { "walkSpeed": 36, "minDurationMs": 2200, "maxDurationMs": 4600, "roamingHalfWidth": 190 },
     "categoryWeights": { "movement": 32, "ambient": 25, "rest": 12, "social": 31 },
     "actions": [
+      { "id": "walk-around", "capability": "walkRight", "category": "movement", "playback": "timed", "weight": 5, "cooldownMs": 9000, "minDurationMs": 2200, "maxDurationMs": 4600 },
       { "id": "look-around", "capability": "look", "category": "ambient", "playback": "timed", "weight": 5, "cooldownMs": 9000, "minDurationMs": 2500, "maxDurationMs": 5200 },
       { "id": "self-groom", "capability": "groom", "category": "ambient", "playback": "timed", "weight": 2, "cooldownMs": 16000, "minDurationMs": 4500, "maxDurationMs": 9000 },
       { "id": "deep-rest", "capability": "sleep", "category": "rest", "playback": "timed", "weight": 1, "cooldownMs": 70000, "minDurationMs": 30000, "maxDurationMs": 100000 },

@@ -107,29 +107,6 @@ const visualBoundsSchema = z
     }
   });
 
-const autonomousActionSchema = z.union([
-  z.object({
-    capability: z.string().min(1),
-    playback: z.literal("once"),
-  }),
-  z
-    .object({
-      capability: z.string().min(1),
-      playback: z.literal("timed"),
-      minDurationMs: z.number().int().positive(),
-      maxDurationMs: z.number().int().positive(),
-    })
-    .superRefine((action, context) => {
-      if (action.maxDurationMs < action.minDurationMs) {
-        context.addIssue({
-          code: "custom",
-          path: ["maxDurationMs"],
-          message: "must be greater than or equal to minDurationMs",
-        });
-      }
-    }),
-]);
-
 const positiveInteger = z.number().int().positive();
 const behaviorCategorySchema = z.enum([
   "movement",
@@ -269,6 +246,7 @@ const petSchema = z
   .object({
     schemaVersion: z.literal(1),
     id: z.string().min(1),
+    sceneEngine: z.literal("realtime-v1").optional(),
     displayName: z.string().min(1),
     description: z.string(),
     spriteVersionNumber: z.literal(2),
@@ -307,9 +285,9 @@ const petSchema = z
         interactionTimelineSchema,
       )
       .default({}),
-    autonomousActions: z.array(autonomousActionSchema).default([]),
     behaviorProfile: behaviorProfileSchema.optional(),
   })
+  .strict()
   .superRefine((pet, context) => {
     for (const [animationId, animation] of Object.entries(pet.animations)) {
       const atlas = pet.atlases[animation.atlas];
@@ -409,24 +387,6 @@ const petSchema = z
         }
       });
     }
-    const scheduledCapabilities = new Set();
-    pet.autonomousActions.forEach((action, index) => {
-      if (!pet.capabilities[action.capability]) {
-        context.addIssue({
-          code: "custom",
-          path: ["autonomousActions", index, "capability"],
-          message: `unknown capability ${action.capability}`,
-        });
-      }
-      if (scheduledCapabilities.has(action.capability)) {
-        context.addIssue({
-          code: "custom",
-          path: ["autonomousActions", index, "capability"],
-          message: "autonomous action capabilities must be unique",
-        });
-      }
-      scheduledCapabilities.add(action.capability);
-    });
     if (pet.behaviorProfile) {
       pet.behaviorProfile.actions.forEach((action, index) => {
         if (!pet.capabilities[action.capability]) {

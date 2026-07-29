@@ -1,5 +1,4 @@
 import { AnimationPlayer } from "../animation/animation-player";
-import { createDefaultBehaviors } from "../behaviors/registry";
 import {
   clampPosition,
   setActivityAnchor,
@@ -13,49 +12,37 @@ import {
   migrateUserSettings,
   type UserSettings,
 } from "../config/settings";
-import { EventBus } from "../events/event-bus";
 import { NativeWindow } from "../native/native-window";
 import { TrayClient } from "../native/tray-client";
 import { loadPet, type LoadedPet } from "../pets/pet-loader";
 import { PetManager } from "../pets/pet-manager";
 import { parseCatalog } from "../pets/schemas";
-import { CanvasRenderer } from "../renderer/canvas-renderer";
-import { PetRuntime } from "../runtime/pet-runtime";
-import { BehaviorMachine } from "../state-machine/behavior-machine";
 import { createTrayHandlers } from "./tray-handlers";
 import { CooldownLedger } from "../behaviors/cooldown-ledger";
 import { PointerGestureTracker } from "../interactions/pointer-gesture";
 import { InteractionRouter } from "../interactions/interaction-router";
-import { CursorProximityController } from "../interactions/cursor-proximity";
-import { CareController } from "../care/care-controller";
-import {
-  defaultPetCareState,
-  type PetCareState,
-} from "../care/care-state";
-import { SemanticInteractionBehavior } from "../behaviors/semantic-interaction";
 import {
   PetMenuController,
   type PetMenuAction,
 } from "../interactions/pet-menu-controller";
 import { listen } from "@tauri-apps/api/event";
 import { RuntimeSessionSwitcher } from "./runtime-session-switcher";
-import { TestShowcase } from "../behaviors/test-showcase";
 import {
   BodyInteractionTracker,
-  identifyYingBodyZone,
+  identifyPetBodyZone,
   type BodyInteractionResult,
 } from "../interactions/body-interaction";
-import { InteractionWheelView } from "../interactions/interaction-wheel-view";
-import { InteractionSurfaceController } from "../interactions/interaction-surface-controller";
-import {
-  interactionForYingBody,
-  interactionForYingSecondary,
-} from "../interactions/ying-interaction-profile";
-import { PropOverlayView } from "../interactions/prop-overlay-view";
-import { CareStatusView } from "../interactions/care-status-view";
 import type { PetScale } from "../native/tray-client";
-import { TimelineInteractionBehavior } from "../behaviors/timeline-interaction";
-import type { InteractionTimelineStage } from "../pets/schemas";
+import { runtimeKindFor } from "./runtime-kind";
+import type { PersonalityMode } from "../personality/profiles";
+
+export interface DesktopPetRuntime {
+  start(): void;
+  stop(): void;
+  setVisible(visible: boolean): Promise<void>;
+  setPaused(paused: boolean): void;
+  setPersonality(mode: PersonalityMode): void;
+}
 
 interface InteractionMachine {
   request(
@@ -81,7 +68,6 @@ export function createInitialContext(
   pet: LoadedPet,
   workArea: WorkArea,
   animations: AnimationControls,
-  careState: PetCareState = defaultPetCareState(Date.now()),
   petScale: PetScale = 1,
 ): PetContext {
   const idleId = pet.manifest.capabilities.idle;
@@ -123,7 +109,6 @@ export function createInitialContext(
     activityAnchor: null,
     roamingHalfWidth: pet.manifest.behaviorProfile.movement.roamingHalfWidth,
     behaviorProfile: pet.manifest.behaviorProfile,
-    careState,
     elapsedMs: 0,
     cooldowns: new CooldownLedger(),
     personalityMode: "balanced",
@@ -149,7 +134,7 @@ export function installInteractionHandlers(
 ): () => void {
   const gestures = new PointerGestureTracker(6);
   const bodyGestures = new BodyInteractionTracker(
-    identifyYingBodyZone,
+    identifyPetBodyZone,
   );
   let bodyPointerId: number | undefined;
   const router = new InteractionRouter(
@@ -309,26 +294,16 @@ async function loadCatalog(): Promise<ReturnType<typeof parseCatalog>> {
   return parseCatalog(await response.json());
 }
 
-export async function bootDesktopPet(): Promise<PetRuntime> {
-  const canvas = document.querySelector<HTMLCanvasElement>("#pet-canvas");
-  if (!canvas) throw new Error("Pet canvas is missing");
+export async function bootDesktopPet(): Promise<DesktopPetRuntime> {
+  const initialCanvas =
+    document.querySelector<HTMLCanvasElement>("#pet-canvas");
+  if (!initialCanvas) throw new Error("Pet canvas is missing");
   const interactionRoot = document.querySelector<HTMLElement>(
     "#pet-interaction-wheel",
   );
   if (!interactionRoot) {
     throw new Error("Pet interaction wheel is missing");
   }
-  const propRoot =
-    document.querySelector<HTMLElement>("#pet-prop-overlay");
-  if (!propRoot) {
-    throw new Error("Pet prop overlay is missing");
-  }
-  const careStatusRoot =
-    document.querySelector<HTMLElement>("#pet-care-status");
-  if (!careStatusRoot) {
-    throw new Error("Pet care status is missing");
-  }
-
   const native = new NativeWindow();
   const tray = new TrayClient();
   const settingsClient = new SettingsClient();
@@ -343,7 +318,6 @@ export async function bootDesktopPet(): Promise<PetRuntime> {
     settings = { ...settings, personalityMode: "balanced" };
     await settingsClient.write(settings);
   }
-  const care = new CareController(settings.careByPet);
   const catalog = await loadCatalog();
   const cache = new Map<string, LoadedPet>();
   const loadById = async (id: string): Promise<LoadedPet> => {
@@ -367,17 +341,21 @@ export async function bootDesktopPet(): Promise<PetRuntime> {
   }
   const workArea = await native.primaryWorkArea();
   const saveSettings = async (next: UserSettings): Promise<void> => {
-    const persisted = { ...next, careByPet: care.snapshot() };
-    await settingsClient.write(persisted);
-    settings = persisted;
+    await settingsClient.write(next);
+    settings = next;
   };
 
   interface RuntimeSession {
-    runtime: PetRuntime;
+    runtime: DesktopPetRuntime;
     context: PetContext;
-    petMenu: PetMenuController;
+    petMenu: Pick<PetMenuController, "show" | "handle">;
+    position(): Point;
+    activityAnchor(): Point | null;
+    isSleeping(): boolean;
     dispose: () => void;
   }
+
+  let refreshTray = async (): Promise<void> => undefined;
 
   const createSession = async (
     loadedPet: LoadedPet,
@@ -385,6 +363,10 @@ export async function bootDesktopPet(): Promise<PetRuntime> {
     previousAnchor?: Point | null,
     scale: PetScale = settings.petScale,
   ): Promise<RuntimeSession> => {
+    const currentCanvas =
+      document.querySelector<HTMLCanvasElement>("#pet-canvas");
+    if (!currentCanvas) throw new Error("Pet canvas is missing");
+    const canvas = currentCanvas.cloneNode(false) as HTMLCanvasElement;
     const player = new AnimationPlayer(loadedPet);
     const animations: AnimationControls = {
       play: (capability, restart) => player.play(capability, restart),
@@ -408,7 +390,6 @@ export async function bootDesktopPet(): Promise<PetRuntime> {
       loadedPet,
       workArea,
       animations,
-      care.get(loadedPet.manifest.id),
       scale,
     );
     if (previousPosition) {
@@ -421,328 +402,37 @@ export async function bootDesktopPet(): Promise<PetRuntime> {
     context.paused = settings.activityPaused;
     context.personalityMode = settings.personalityMode;
     await native.resize(context.windowSize.width, context.windowSize.height);
-    const events = new EventBus<{
-      behaviorError: { id: string; message: string };
-      interactionStage: {
-        actionId: string;
-        stage: InteractionTimelineStage;
-        index: number;
+    if (runtimeKindFor(loadedPet.manifest) === "stage") {
+      const { createRealtimePetSession } = await import(
+        "./realtime-pet-session"
+      );
+      const realtime = await createRealtimePetSession({
+        canvas,
+        interactionRoot,
+        pet: loadedPet,
+        petScale: scale,
+        workArea,
+        native,
+        previousWindowPosition: previousPosition,
+        paused: context.paused,
+        personalityMode: context.personalityMode,
+      });
+      const petMenu: Pick<PetMenuController, "show" | "handle"> = {
+        show: realtime.showMenu,
+        handle: (action) => realtime.performAction(action),
       };
-      interactionComplete: {
-        actionId: string;
-        completed: boolean;
+      currentCanvas.replaceWith(canvas);
+      return {
+        runtime: realtime.runtime,
+        context,
+        petMenu,
+        position: realtime.position,
+        activityAnchor: () => null,
+        isSleeping: realtime.isSleeping,
+        dispose: realtime.dispose,
       };
-    }>();
-    const machine = new BehaviorMachine(context, events, "idle");
-    for (const behavior of createDefaultBehaviors(
-      loadedPet.manifest.behaviorProfile,
-      loadedPet.manifest.actions,
-    )) {
-      machine.register(behavior);
     }
-    const interactionBehaviors = new Map<
-      Exclude<PetMenuAction, "wake">,
-      SemanticInteractionBehavior
-    >();
-    for (const [actionId, playback] of [
-      ["pet", "once"],
-      ["feed", "timed"],
-      ["play", "once"],
-      ["sleep", "timed"],
-    ] as const) {
-      const behavior = new SemanticInteractionBehavior(
-        actionId,
-        loadedPet.manifest.actions[actionId],
-        playback,
-      );
-      interactionBehaviors.set(actionId, behavior);
-      machine.register(behavior);
-    }
-    for (const [actionId, definition] of Object.entries(
-      loadedPet.manifest.interactionActions,
-    )) {
-      if (loadedPet.manifest.interactionTimelines[actionId]) continue;
-      machine.register(
-        new SemanticInteractionBehavior(
-          actionId,
-          definition,
-          actionId.startsWith("feed-") ? "timed" : "once",
-        ),
-      );
-    }
-    for (const [actionId, definition] of Object.entries(
-      loadedPet.manifest.interactionTimelines,
-    )) {
-      machine.register(
-        new TimelineInteractionBehavior(actionId, definition, {
-          onStage: (id, stage, index) => {
-            events.emit("interactionStage", {
-              actionId: id,
-              stage,
-              index,
-            });
-          },
-          onComplete: (id, completed) => {
-            events.emit("interactionComplete", {
-              actionId: id,
-              completed,
-            });
-          },
-        }),
-      );
-    }
-    machine.request("idle");
-    const renderer = new CanvasRenderer(
-      canvas,
-      context.windowSize.width,
-      context.windowSize.height,
-    );
-    const interactionSurface = new InteractionSurfaceController(
-      interactionRoot,
-      renderer,
-      native,
-    );
-    const cursor = new CursorProximityController(
-      context.behaviorProfile,
-      context.cooldowns,
-      machine,
-      native,
-      {
-        look: (directionIndex) => player.look(directionIndex),
-        clear: () => player.clearLook(),
-      },
-    );
-    const label =
-      document.querySelector<HTMLElement>("#test-action-label");
-    const showcase = new TestShowcase(
-      loadedPet.manifest.actions,
-      animations,
-      {
-        show: (text) => {
-          if (!label) return;
-          label.textContent = text;
-          label.classList.add("visible");
-        },
-        hide: () => {
-          if (!label) return;
-          label.classList.remove("visible");
-          label.textContent = "";
-        },
-      },
-    );
-    const runtime = new PetRuntime({
-      context,
-      machine,
-      player,
-      renderer,
-      native,
-      cursor,
-      showcase,
-    });
-    const petMenu = new PetMenuController({
-      getMenuState: () => {
-        const careState = care.get(loadedPet.manifest.id);
-        context.careState = careState;
-        return {
-          pets: catalog.pets.map((id) => ({
-            id,
-            displayName: cache.get(id)?.manifest.displayName ?? id,
-          })),
-          selectedPetId: loadedPet.manifest.id,
-          personalityMode: context.personalityMode,
-          testModeEnabled,
-          paused: context.paused,
-          care: careState,
-        };
-      },
-      showMenu: (state) => native.showPetMenu(state),
-      requestAction: (behaviorId) =>
-        machine.request(`interaction-${behaviorId}`, {
-          restart: true,
-          source: "user",
-        }),
-      requestWake: () => {
-        const sleep = interactionBehaviors.get("sleep");
-        if (!sleep || machine.activeId !== sleep.id) return false;
-        sleep.requestExit();
-        return true;
-      },
-      isSleeping: () =>
-        machine.activeId === interactionBehaviors.get("sleep")?.id,
-      applyCare: (action) => {
-        const careState = care.apply(loadedPet.manifest.id, action);
-        context.careState = careState;
-        return careState;
-      },
-      persist: () => saveSettings(settings),
-    });
-    const propOverlay = new PropOverlayView(propRoot);
-    const disposeTimelineStage = events.on(
-      "interactionStage",
-      ({ stage }) => {
-        propOverlay.setTimelineStage(stage.propState ?? stage.id);
-      },
-    );
-    const careStatus = new CareStatusView(careStatusRoot);
-    const propLayout = () => ({
-      petOrigin: interactionSurface.petOrigin,
-      petSize: context.windowSize,
-      side:
-        interactionRoot.dataset.side === "left"
-          ? ("left" as const)
-          : ("right" as const),
-    });
-    let bodyInteractionActive = false;
-    const closeInteractionSurface = async (): Promise<void> => {
-      bodyInteractionActive = false;
-      propOverlay.cancel();
-      careStatus.hide();
-      document.body.classList.remove("body-interaction-active");
-      await interactionSurface.close(context);
-      runtime.invalidateRender();
-      await runtime.update(0);
-    };
-    const interactionWheel = new InteractionWheelView(interactionRoot, {
-      getAffection: () => care.get(loadedPet.manifest.id).affection,
-      enterBodyInteraction: () => {
-        bodyInteractionActive = true;
-        document.body.classList.add("body-interaction-active");
-      },
-      select: async (option) => {
-        if (option === "wake") {
-          await petMenu.handle("wake");
-          return;
-        }
-        const interaction = interactionForYingSecondary(option);
-        const timeline =
-          loadedPet.manifest.interactionTimelines[
-            interaction.behaviorId
-          ];
-        let waitForTimeline: Promise<boolean> | undefined;
-        let disposeTimelineCompletion: (() => void) | undefined;
-        if (timeline && interaction.prop) {
-          propOverlay.beginTimeline(interaction.prop, propLayout());
-          waitForTimeline = new Promise<boolean>((resolve) => {
-            disposeTimelineCompletion = events.on(
-              "interactionComplete",
-              (event) => {
-                if (event.actionId !== interaction.behaviorId) return;
-                disposeTimelineCompletion?.();
-                disposeTimelineCompletion = undefined;
-                resolve(event.completed);
-              },
-            );
-          });
-        }
-        const accepted = await petMenu.handle(
-          interaction.careAction,
-          interaction.behaviorId,
-        );
-        careStatus.show(
-          care.get(loadedPet.manifest.id),
-          interactionSurface.statusOrigin,
-          context.windowSize.width,
-        );
-        if (!accepted) {
-          disposeTimelineCompletion?.();
-          propOverlay.cancel();
-          return;
-        }
-        if (waitForTimeline) {
-          await waitForTimeline;
-          propOverlay.endTimeline();
-        } else if (interaction.prop) {
-          await propOverlay.play(interaction.prop, propLayout());
-        }
-      },
-      close: () => {
-        void closeInteractionSurface();
-      },
-    });
-    const openInteractionWheel = async (): Promise<void> => {
-      if (interactionSurface.isOpen) {
-        interactionWheel.close();
-        return;
-      }
-      machine.request("idle", { restart: true, source: "user" });
-      await interactionSurface.open(context);
-      runtime.invalidateRender();
-      await runtime.update(0);
-      careStatus.show(
-        care.get(loadedPet.manifest.id),
-        interactionSurface.statusOrigin,
-        context.windowSize.width,
-      );
-      interactionWheel.open();
-    };
-    const disposeDrag = installInteractionHandlers(
-      canvas,
-      context,
-      machine,
-      native,
-      () => {
-        if (loadedPet.manifest.id === "ying") {
-          void openInteractionWheel();
-        } else {
-          void petMenu.show();
-        }
-      },
-      loadedPet.manifest.id === "ying"
-        ? {
-            active: () => bodyInteractionActive,
-            petOrigin: () => interactionSurface.petOrigin,
-            onResult: (result) => {
-              const interaction = interactionForYingBody(result);
-              propOverlay.showBodyFeedback(
-                interaction.feedback,
-                result.zone,
-                propLayout(),
-              );
-              void petMenu.handle(
-                interaction.careAction,
-                interaction.behaviorId,
-              ).then(() => {
-                careStatus.show(
-                  care.get(loadedPet.manifest.id),
-                  interactionSurface.statusOrigin,
-                  context.windowSize.width,
-                );
-              });
-            },
-          }
-        : undefined,
-    );
-    const closeOnEscape = (event: KeyboardEvent): void => {
-      if (event.key === "Escape" && interactionSurface.isOpen) {
-        interactionWheel.close();
-      }
-    };
-    const closeOnBlur = (): void => {
-      if (interactionSurface.isOpen) {
-        interactionWheel.close();
-      }
-    };
-    window.addEventListener("keydown", closeOnEscape);
-    window.addEventListener("blur", closeOnBlur);
-    await runtime.update(0);
-    return {
-      runtime,
-      context,
-      petMenu,
-      dispose: () => {
-        disposeDrag();
-        window.removeEventListener("keydown", closeOnEscape);
-        window.removeEventListener("blur", closeOnBlur);
-        bodyInteractionActive = false;
-        propOverlay.cancel();
-        careStatus.hide();
-        disposeTimelineStage();
-        document.body.classList.remove("body-interaction-active");
-        if (interactionSurface.isOpen) {
-          interactionWheel.close();
-        }
-      },
-    };
+    throw new Error("Only realtime-v1 pets are supported");
   };
 
   const initialSession = await createSession(pet);
@@ -750,7 +440,7 @@ export async function bootDesktopPet(): Promise<PetRuntime> {
   await sessions.current.runtime.setVisible(settings.visible);
   sessions.current.runtime.start();
 
-  const refreshTray = async (): Promise<void> => {
+  refreshTray = async (): Promise<void> => {
     await tray.configure({
       pets: catalog.pets.map((id) => ({
         id,
@@ -760,6 +450,7 @@ export async function bootDesktopPet(): Promise<PetRuntime> {
       personalityMode: settings.personalityMode,
       testModeEnabled,
       paused: settings.activityPaused,
+      sleeping: sessions.current.isSleeping(),
       visible: settings.visible,
       autostart: settings.autostart,
       petScale: settings.petScale,
@@ -774,8 +465,8 @@ export async function bootDesktopPet(): Promise<PetRuntime> {
       await sessions.replace(() =>
         createSession(
           replacement,
-          previous.context.position,
-          previous.context.activityAnchor,
+          previous.position(),
+          previous.activityAnchor(),
         ),
       );
     },
@@ -790,12 +481,14 @@ export async function bootDesktopPet(): Promise<PetRuntime> {
       await sessions.replace(() =>
         createSession(
           currentPet,
-          previous.context.position,
-          previous.context.activityAnchor,
+          previous.position(),
+          previous.activityAnchor(),
           scale,
         ),
       );
     },
+    performPetAction: (action) =>
+      sessions.current.petMenu.handle(action),
     refreshTray,
   });
   await tray.setAutostart(settings.autostart);

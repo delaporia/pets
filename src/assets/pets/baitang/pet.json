@@ -1,6 +1,7 @@
 {
   "schemaVersion": 1,
   "id": "baitang",
+  "sceneEngine": "realtime-v1",
   "displayName": "白糖",
   "description": "穿浅蓝色小背心的白色长毛猫，高冷而有边界感，社会化良好，会握手和礼貌讨吃的。",
   "spriteVersionNumber": 2,
@@ -69,12 +70,12 @@
     "pickedUp": { "loop": "pickedUpPose" },
     "land": { "loop": "landSoftly" }
   },
-  "autonomousActions": [],
   "behaviorProfile": {
     "scheduler": { "minIntervalMs": 9000, "maxIntervalMs": 18000, "recoveryMs": 8000 },
     "movement": { "walkSpeed": 32, "minDurationMs": 2500, "maxDurationMs": 5000, "roamingHalfWidth": 180 },
     "categoryWeights": { "movement": 20, "ambient": 30, "rest": 25, "social": 25 },
     "actions": [
+      { "id": "walk-around", "capability": "walkRight", "category": "movement", "playback": "timed", "weight": 4, "cooldownMs": 10000, "minDurationMs": 2500, "maxDurationMs": 5000 },
       { "id": "look-around", "capability": "look", "category": "ambient", "playback": "timed", "weight": 4, "cooldownMs": 10000, "minDurationMs": 3000, "maxDurationMs": 6000 },
       { "id": "self-groom", "capability": "groom", "category": "ambient", "playback": "timed", "weight": 3, "cooldownMs": 14000, "minDurationMs": 5000, "maxDurationMs": 12000 },
       { "id": "deep-rest", "capability": "sleep", "category": "rest", "playback": "timed", "weight": 2, "cooldownMs": 60000, "minDurationMs": 30000, "maxDurationMs": 120000 },

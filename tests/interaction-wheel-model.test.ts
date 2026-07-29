@@ -4,7 +4,7 @@ import { InteractionWheelModel } from "../src/app/interactions/interaction-wheel
 
 describe("InteractionWheelModel", () => {
   it("replaces the primary wheel with food choices", () => {
-    const wheel = new InteractionWheelModel(() => 100);
+    const wheel = new InteractionWheelModel();
 
     wheel.open();
     wheel.choosePrimary("feed");
@@ -16,33 +16,31 @@ describe("InteractionWheelModel", () => {
     });
   });
 
-  it("starts with one feeding and one play choice", () => {
-    const wheel = new InteractionWheelModel(() => 0);
+  it("opens every feeding and play choice without progression locks", () => {
+    const wheel = new InteractionWheelModel();
 
     wheel.open();
     wheel.choosePrimary("feed");
-    expect(wheel.snapshot().options).toEqual(["treat"]);
-
-    wheel.back();
-    wheel.choosePrimary("play");
-    expect(wheel.snapshot().options).toEqual(["ball"]);
-  });
-
-  it("unlocks props at affection 10, 20 and 30", () => {
-    let affection = 9;
-    const wheel = new InteractionWheelModel(() => affection);
-
-    wheel.open();
-    wheel.choosePrimary("feed");
-    expect(wheel.snapshot().options).toEqual(["treat"]);
-    affection = 10;
-    expect(wheel.snapshot().options).toEqual(["treat", "kibble"]);
-    affection = 30;
     expect(wheel.snapshot().options).toEqual(["treat", "kibble", "can"]);
 
     wheel.back();
     wheel.choosePrimary("play");
-    expect(wheel.snapshot().options).toEqual(["ball", "wand", "butterfly"]);
+    expect(wheel.snapshot().options).toEqual(["butterfly", "ball", "wand"]);
+  });
+
+  it("hides unfinished primary groups and secondary actions", () => {
+    const available = new Set(["feed", "play", "treat", "butterfly"]);
+    const wheel = new InteractionWheelModel((option) => available.has(option));
+
+    wheel.open();
+    expect(wheel.snapshot().options).toEqual(["feed", "play"]);
+
+    wheel.choosePrimary("feed");
+    expect(wheel.snapshot().options).toEqual(["treat"]);
+
+    wheel.back();
+    wheel.choosePrimary("play");
+    expect(wheel.snapshot().options).toEqual(["butterfly"]);
   });
 
   it("enters direct body interaction instead of showing touch submenus", () => {
@@ -68,8 +66,36 @@ describe("InteractionWheelModel", () => {
     expect(wheel.snapshot()).toEqual({
       phase: "primary",
       primary: null,
-      options: ["touch", "feed", "play", "companion"],
+      options: ["touch", "feed", "play", "sleep"],
     });
+  });
+
+  it("can expose one direct sleep-state command in the primary wheel", () => {
+    let sleeping = false;
+    const wheel = new InteractionWheelModel(
+      (option) =>
+        option === "sleep"
+          ? !sleeping
+          : option === "wake"
+            ? sleeping
+            : true,
+    );
+
+    wheel.open();
+    expect(wheel.snapshot().options).toEqual([
+      "touch",
+      "feed",
+      "play",
+      "sleep",
+    ]);
+
+    sleeping = true;
+    expect(wheel.snapshot().options).toEqual([
+      "touch",
+      "feed",
+      "play",
+      "wake",
+    ]);
   });
 
   it("hides every menu option while a selected interaction performs", () => {
