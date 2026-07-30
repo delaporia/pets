@@ -35,6 +35,7 @@ import {
 import type { PetScale } from "../native/tray-client";
 import { runtimeKindFor } from "./runtime-kind";
 import type { PersonalityMode } from "../personality/profiles";
+import { fittedPetScale } from "../stage/pet-screen-fit";
 
 export interface DesktopPetRuntime {
   start(): void;
@@ -68,7 +69,7 @@ export function createInitialContext(
   pet: LoadedPet,
   workArea: WorkArea,
   animations: AnimationControls,
-  petScale: PetScale = 1,
+  petScale = 1,
 ): PetContext {
   const idleId = pet.manifest.capabilities.idle;
   const idle = pet.manifest.animations[idleId];
@@ -386,11 +387,16 @@ export async function bootDesktopPet(): Promise<DesktopPetRuntime> {
         return (animation.frames.length / animation.fps) * 1_000;
       },
     };
+    const effectiveScale = fittedPetScale(
+      loadedPet,
+      scale,
+      workArea,
+    );
     const context = createInitialContext(
       loadedPet,
       workArea,
       animations,
-      scale,
+      effectiveScale,
     );
     if (previousPosition) {
       context.position = clampPosition(context, previousPosition);
@@ -401,7 +407,6 @@ export async function bootDesktopPet(): Promise<DesktopPetRuntime> {
     }
     context.paused = settings.activityPaused;
     context.personalityMode = settings.personalityMode;
-    await native.resize(context.windowSize.width, context.windowSize.height);
     if (runtimeKindFor(loadedPet.manifest) === "stage") {
       const { createRealtimePetSession } = await import(
         "./realtime-pet-session"
@@ -410,10 +415,10 @@ export async function bootDesktopPet(): Promise<DesktopPetRuntime> {
         canvas,
         interactionRoot,
         pet: loadedPet,
-        petScale: scale,
+        petScale: effectiveScale,
         workArea,
         native,
-        previousWindowPosition: previousPosition,
+        previousFootPosition: previousPosition,
         paused: context.paused,
         personalityMode: context.personalityMode,
       });

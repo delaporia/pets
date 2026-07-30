@@ -13,10 +13,26 @@ struct LogicalBounds {
     height: f64,
 }
 
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+struct WindowUpdatePlan {
+    resize: bool,
+    reposition: bool,
+}
+
 #[derive(Debug, Clone, Copy, PartialEq, Serialize)]
 pub struct LogicalPoint {
     x: f64,
     y: f64,
+}
+
+fn window_update_plan(current: LogicalBounds, target: LogicalBounds) -> WindowUpdatePlan {
+    const TOLERANCE: f64 = 0.5;
+    WindowUpdatePlan {
+        resize: (current.width - target.width).abs() > TOLERANCE
+            || (current.height - target.height).abs() > TOLERANCE,
+        reposition: (current.x - target.x).abs() > TOLERANCE
+            || (current.y - target.y).abs() > TOLERANCE,
+    }
 }
 
 fn clamp_window_bounds(
@@ -123,8 +139,22 @@ pub fn resize_and_move_pet_window(
             height,
         },
     );
-    window.set_size(LogicalSize::new(bounds.width, bounds.height))?;
-    window.set_position(LogicalPosition::new(bounds.x, bounds.y))?;
+    let scale = window.scale_factor()?;
+    let current_size = window.outer_size()?;
+    let current_position = window.outer_position()?;
+    let current = LogicalBounds {
+        x: current_position.x as f64 / scale,
+        y: current_position.y as f64 / scale,
+        width: current_size.width as f64 / scale,
+        height: current_size.height as f64 / scale,
+    };
+    let plan = window_update_plan(current, bounds);
+    if plan.resize {
+        window.set_size(LogicalSize::new(bounds.width, bounds.height))?;
+    }
+    if plan.reposition {
+        window.set_position(LogicalPosition::new(bounds.x, bounds.y))?;
+    }
     Ok(())
 }
 
@@ -166,6 +196,30 @@ mod tests {
                 y: 840.0,
                 width: 360.0,
                 height: 240.0,
+            },
+        );
+    }
+
+    #[test]
+    fn avoids_redundant_resize_during_position_only_updates() {
+        assert_eq!(
+            window_update_plan(
+                LogicalBounds {
+                    x: 100.0,
+                    y: 200.0,
+                    width: 320.0,
+                    height: 240.0,
+                },
+                LogicalBounds {
+                    x: 108.0,
+                    y: 200.0,
+                    width: 320.0,
+                    height: 240.0,
+                },
+            ),
+            WindowUpdatePlan {
+                resize: false,
+                reposition: true,
             },
         );
     }

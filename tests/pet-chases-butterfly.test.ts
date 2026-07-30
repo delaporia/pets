@@ -54,6 +54,18 @@ describe("pet chases butterfly scene", () => {
     expect(left.settlement.petPosition.x).toBe(460);
     expect(right.settlement.petPosition.y).toBe(720);
     expect(left.settlement.petPosition.y).toBe(720);
+    const rightPet = right.transformTracks.find(
+      ({ entityId }) => entityId === "pet",
+    )!;
+    const leftPet = left.transformTracks.find(
+      ({ entityId }) => entityId === "pet",
+    )!;
+    expect(rightPet.keyframes.every(({ value }) => value.scale.x > 0)).toBe(
+      true,
+    );
+    expect(leftPet.keyframes.every(({ value }) => value.scale.x < 0)).toBe(
+      true,
+    );
   });
 
   it("accepts a boundary-clamped chase distance", () => {
@@ -105,7 +117,7 @@ describe("pet chases butterfly scene", () => {
     );
   });
 
-  it("uses portable semantic pet clips for every built-in pet", () => {
+  it("uses personality-ready butterfly beats for every built-in pet", () => {
     const scene = createPetChasesButterflyScene({
       origin: { x: 400, y: 720 },
       direction: "right",
@@ -121,7 +133,14 @@ describe("pet chases butterfly scene", () => {
     expect(
       new Set(petTrack.keyframes.map(({ clip }) => clip)),
     ).toEqual(
-      new Set(["idle", "look", "walkRight", "play", "pet"]),
+      new Set([
+        "idle",
+        "butterflyNotice",
+        "butterflyCrouch",
+        "butterflyRun",
+        "butterflyPounce",
+        "butterflyLand",
+      ]),
     );
   });
 
@@ -140,11 +159,11 @@ describe("pet chases butterfly scene", () => {
     expect(yingTrack.keyframes.map(({ clip, atMs }) => [clip, atMs]))
       .toEqual([
         ["idle", 0],
-        ["look", 700],
-        ["walkLeft", 1_500],
-        ["walkLeft", 2_500],
-        ["play", 5_000],
-        ["pet", 6_000],
+        ["butterflyNotice", 700],
+        ["butterflyCrouch", 1_500],
+        ["butterflyRun", 2_500],
+        ["butterflyPounce", 5_000],
+        ["butterflyLand", 6_000],
         ["idle", 6_800],
       ]);
   });

@@ -66,6 +66,16 @@ export class SceneDirector {
       (id) => this.registry.get(id),
       this.onEvent,
     );
+    try {
+      // Prime every tracked actor before the next stage bounds pass. Newly
+      // registered scene props otherwise spend one frame at the entity
+      // factory's fallback origin and can expand the transparent window to
+      // the corner of the screen.
+      player.update(0);
+    } catch (error) {
+      scope.release();
+      throw error;
+    }
     return new Promise<SceneResult>((resolve) => {
       this.active = { definition, player, scope, resolve };
     });

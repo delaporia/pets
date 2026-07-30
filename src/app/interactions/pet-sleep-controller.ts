@@ -85,6 +85,22 @@ export class PetSleepController {
     this.dependencies.play("idle", true);
   }
 
+  restoreVisualState(): void {
+    if (this.currentState === "entering" && this.definition.enter) {
+      this.dependencies.play(this.definition.enter, false);
+      return;
+    }
+    if (this.currentState === "sleeping") {
+      this.dependencies.play(this.definition.loop, true);
+      return;
+    }
+    if (this.currentState === "waking" && this.definition.exit) {
+      this.dependencies.play(this.definition.exit, false);
+      return;
+    }
+    this.dependencies.play("idle", true);
+  }
+
   dispose(): void {
     this.cancelTimer();
   }

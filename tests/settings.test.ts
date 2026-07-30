@@ -60,6 +60,12 @@ describe("user settings", () => {
     expect(
       parseUserSettings({ ...defaultUserSettings(), petScale: 1.25 }).petScale,
     ).toBe(1.25);
+    expect(
+      parseUserSettings({ ...defaultUserSettings(), petScale: 2 }).petScale,
+    ).toBe(2);
+    expect(
+      parseUserSettings({ ...defaultUserSettings(), petScale: 3 }).petScale,
+    ).toBe(3);
     expect(() =>
       parseUserSettings({ ...defaultUserSettings(), petScale: 9 }),
     ).toThrow(/petScale/);

@@ -15,6 +15,8 @@ export const userSettingsSchema = z
         z.literal(1),
         z.literal(1.25),
         z.literal(1.5),
+        z.literal(2),
+        z.literal(3),
       ])
       .default(1),
   })

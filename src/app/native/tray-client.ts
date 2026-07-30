@@ -28,7 +28,7 @@ export interface TrayState {
   petScale: PetScale;
 }
 
-export const petScales = [0.75, 1, 1.25, 1.5] as const;
+export const petScales = [0.75, 1, 1.25, 1.5, 2, 3] as const;
 export type PetScale = (typeof petScales)[number];
 
 interface EventLike {

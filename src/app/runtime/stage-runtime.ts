@@ -119,6 +119,7 @@ export class StageRuntime {
   private elapsedSinceHitMaskMs = 0;
   private readonly hitMaskIntervalMs: number;
   private paused = false;
+  private interactionSceneDepth = 0;
   private elapsedMs = 0;
 
   constructor(
@@ -177,7 +178,7 @@ export class StageRuntime {
         entity.animation.elapsedMs += delta;
       }
     }
-    if (!this.paused) {
+    if (!this.paused || this.interactionSceneDepth > 0) {
       director.update(delta);
     }
     await this.dependencies.onBeforeRender?.(this.elapsedMs, delta);
@@ -214,6 +215,12 @@ export class StageRuntime {
   setPaused(paused: boolean): void {
     this.paused = paused;
     this.dependencies.onPausedChanged?.(paused);
+  }
+
+  setInteractionSceneActive(active: boolean): void {
+    this.interactionSceneDepth = active
+      ? this.interactionSceneDepth + 1
+      : Math.max(0, this.interactionSceneDepth - 1);
   }
 
   setPersonality(mode: PersonalityMode): void {

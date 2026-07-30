@@ -86,7 +86,7 @@ pub fn menu_model(state: &TrayState) -> Vec<MenuDescriptor> {
             checked: Some(mode == state.personality_mode),
         });
     }
-    for scale in [0.75, 1.0, 1.25, 1.5] {
+    for scale in [0.75, 1.0, 1.25, 1.5, 2.0, 3.0] {
         items.push(MenuDescriptor {
             id: format!("scale:{scale}"),
             checked: Some(scale == state.pet_scale),
@@ -263,6 +263,8 @@ fn build_menu(app: &AppHandle, state: &TrayState) -> Result<BuiltMenu, AppError>
         (1.0, "标准（100%）"),
         (1.25, "大（125%）"),
         (1.5, "特大（150%）"),
+        (2.0, "超大（200%）"),
+        (3.0, "巨大（300%）"),
     ] {
         let id = scale.to_string();
         let item = CheckMenuItem::with_id(
@@ -484,6 +486,20 @@ mod tests {
         assert!(items.iter().any(|item| item.id == "pause" && item.checked == Some(false)));
         assert!(items.iter().any(|item| item.id == "visible" && item.checked == Some(true)));
         assert!(items.iter().any(|item| item.id == "autostart" && item.checked == Some(true)));
+    }
+
+    #[test]
+    fn exposes_large_pet_scale_options() {
+        let items = menu_model(&TrayState {
+            pet_scale: 3.0,
+            ..state()
+        });
+        assert!(items
+            .iter()
+            .any(|item| item.id == "scale:2" && item.checked == Some(false)));
+        assert!(items
+            .iter()
+            .any(|item| item.id == "scale:3" && item.checked == Some(true)));
     }
 
     #[test]

@@ -159,30 +159,25 @@ describe("built-in pet manifests", () => {
     );
   });
 
-  it("ships Ying's feeding and play interactions as shared staged timelines", async () => {
+  it("keeps Ying's non-scene feeding and play options on her own clips", async () => {
     const ying = parsePetManifest(
       JSON.parse(
         await readFile(join(petsRoot, "ying", "pet.json"), "utf8"),
       ),
     );
 
-    expect(ying.interactionTimelines["feed-kibble"]?.stages.map(
-      (stage) => stage.propState,
-    )).toEqual(["bowl", "approach", "watch", "pour", "eat", "finish"]);
-    expect(ying.interactionTimelines["feed-can"]?.stages.some(
-      (stage) => stage.propState === "delight",
-    )).toBe(true);
-    expect(ying.interactionTimelines["feed-treat"]?.stages.some(
-      (stage) => stage.propState === "lick",
-    )).toBe(true);
-    expect(Object.keys(ying.interactionTimelines).sort()).toEqual([
+    expect(Object.keys(ying.interactionActions).sort()).toEqual([
       "feed-can",
       "feed-kibble",
-      "feed-treat",
       "play-ball",
-      "play-butterfly",
       "play-wand",
+      "touch-belly",
+      "touch-chin",
+      "touch-head",
+      "touch-head-fast",
+      "touch-tail",
     ]);
+    expect(Object.keys(ying.interactionTimelines)).toEqual([]);
   });
 
   it("keeps Wuyi calm enough for long-running desktop use", async () => {
@@ -295,6 +290,89 @@ describe("built-in pet manifests", () => {
             `${petId} cannot resolve ${keyframe.clip} in ${scene.id}`,
           ).toBeDefined();
         }
+      }
+    }
+  });
+
+  it("gives every pet its own feeding, butterfly, and body-touch reactions", async () => {
+    const catalog = parseCatalog(
+      JSON.parse(await readFile(join(petsRoot, "catalog.json"), "utf8")),
+    );
+    const atlasBytes: Buffer[] = [];
+    for (const petId of catalog.pets) {
+      const manifest = parsePetManifest(
+        JSON.parse(
+          await readFile(join(petsRoot, petId, "pet.json"), "utf8"),
+        ),
+      );
+      expect(manifest.atlases.interactionsV2).toMatchObject({
+        path: "interactions-v2.webp",
+        columns: 8,
+        rows: 2,
+      });
+      for (const capability of [
+        "treatNotice",
+        "treatApproach",
+        "treatEat",
+        "treatFinish",
+        "butterflyNotice",
+        "butterflyCrouch",
+        "butterflyRun",
+        "butterflyPounce",
+        "butterflyLand",
+      ]) {
+        const animationId = manifest.capabilities[capability];
+        expect(animationId, `${petId} missing ${capability}`).toBeDefined();
+        expect(manifest.animations[animationId!]).toBeDefined();
+      }
+      for (const actionId of [
+        "touch-head",
+        "touch-head-fast",
+        "touch-chin",
+        "touch-belly",
+        "touch-tail",
+      ]) {
+        expect(
+          manifest.interactionActions[actionId],
+          `${petId} falls back for ${actionId}`,
+        ).toBeDefined();
+      }
+      atlasBytes.push(
+        await readFile(join(petsRoot, petId, "interactions-v2.webp")),
+      );
+    }
+    expect(new Set(atlasBytes.map((bytes) => bytes.toString("base64"))).size)
+      .toBe(catalog.pets.length);
+  });
+
+  it("uses dedicated body-touch atlases instead of basic action fallbacks", async () => {
+    for (const petId of [
+      "wuyi",
+      "wuyiyi",
+      "ying",
+      "baitang",
+      "duobi",
+    ]) {
+      const pet = parsePetManifest(
+        JSON.parse(
+          await readFile(join(petsRoot, petId, "pet.json"), "utf8"),
+        ),
+      );
+      for (const actionId of [
+        "touch-head",
+        "touch-head-fast",
+        "touch-chin",
+        "touch-belly",
+        "touch-tail",
+      ] as const) {
+        const action = pet.interactionActions[actionId];
+        expect(action, `${petId}:${actionId}`).toBeDefined();
+        const clip = pet.animations[action!.loop];
+        expect(clip, `${petId}:${actionId}:${action!.loop}`).toBeDefined();
+        expect(
+          pet.atlases[clip!.atlas]?.path,
+          `${petId}:${actionId} should use a touch atlas`,
+        ).toMatch(/interaction|touch/);
       }
     }
   });

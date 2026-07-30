@@ -19,6 +19,7 @@ export interface StagePetInteractionOptions {
     normalize(point: Point): Point;
     onResult(result: BodyInteractionResult): void | Promise<void>;
   };
+  constrainPosition?(position: Point): Point;
   invalidate(): void;
   positionChanged?(position: Point): void;
 }
@@ -132,10 +133,13 @@ export function installStagePetInteractions(
         elapsedMs: 0,
       };
     }
-    actor.transform.position = {
+    const requestedPosition = {
       x: event.screenX - screenOffset.x,
       y: event.screenY - screenOffset.y,
     };
+    actor.transform.position = options.constrainPosition
+      ? options.constrainPosition(requestedPosition)
+      : requestedPosition;
     options.positionChanged?.({ ...actor.transform.position });
     options.invalidate();
   };

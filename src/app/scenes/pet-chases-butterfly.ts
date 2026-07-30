@@ -61,11 +61,15 @@ function petKeyframes(
     transform(
       shifted(origin, direction, horizontal, vertical),
       1,
-      scale,
+      { x: scale.x * direction, y: scale.y },
       rotation * direction,
     );
   return [
-    { atMs: 0, value: transform(origin), easing: "easeOut" },
+    {
+      atMs: 0,
+      value: transform(origin, 1, { x: direction, y: 1 }),
+      easing: "easeOut",
+    },
     {
       atMs: 700,
       value: at(
@@ -124,6 +128,8 @@ function petKeyframes(
       atMs: 6_800,
       value: transform(
         shifted(origin, direction, distance),
+        1,
+        { x: direction, y: 1 },
       ),
       easing: "easeInOut",
     },
@@ -131,6 +137,8 @@ function petKeyframes(
       atMs: 8_200,
       value: transform(
         shifted(origin, direction, distance),
+        1,
+        { x: direction, y: 1 },
       ),
       easing: "linear",
     },
@@ -192,16 +200,15 @@ function butterflyKeyframes(
 }
 
 function petAnimations(
-  direction: "left" | "right",
+  _direction: "left" | "right",
 ): AnimationKeyframe[] {
-  const walk = direction === "left" ? "walkLeft" : "walkRight";
   return [
     { atMs: 0, clip: "idle", loop: true },
-    { atMs: 700, clip: "look", loop: false },
-    { atMs: 1_500, clip: walk, loop: true },
-    { atMs: 2_500, clip: walk, loop: true },
-    { atMs: 5_000, clip: "play", loop: false },
-    { atMs: 6_000, clip: "pet", loop: false },
+    { atMs: 700, clip: "butterflyNotice", loop: false },
+    { atMs: 1_500, clip: "butterflyCrouch", loop: false },
+    { atMs: 2_500, clip: "butterflyRun", loop: true },
+    { atMs: 5_000, clip: "butterflyPounce", loop: false },
+    { atMs: 6_000, clip: "butterflyLand", loop: false },
     { atMs: 6_800, clip: "idle", loop: true },
   ];
 }

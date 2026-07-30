@@ -7,8 +7,16 @@
   "spriteVersionNumber": 2,
   "display": {
     "scale": 0.6,
-    "visualBounds": { "left": 7, "top": 6, "right": 185, "bottom": 202 },
-    "footAnchor": { "x": 96, "y": 202 }
+    "visualBounds": {
+      "left": 5,
+      "top": 5,
+      "right": 187,
+      "bottom": 203
+    },
+    "footAnchor": {
+      "x": 96,
+      "y": 202
+    }
   },
   "atlases": {
     "main": {
@@ -17,28 +25,408 @@
       "cellHeight": 208,
       "columns": 8,
       "rows": 11
+    },
+    "interactionsV2": {
+      "path": "interactions-v2.webp",
+      "cellWidth": 192,
+      "cellHeight": 208,
+      "columns": 8,
+      "rows": 2
+    },
+    "touchV2": {
+      "path": "touch-v2.webp",
+      "cellWidth": 192,
+      "cellHeight": 208,
+      "columns": 8,
+      "rows": 4
     }
   },
   "animations": {
-    "idle": { "atlas": "main", "row": 0, "frames": [0, 1, 2, 3, 4, 5], "fps": 4, "loop": true },
-    "walkRight": { "atlas": "main", "row": 1, "frames": [0, 1, 2, 3, 4, 5, 6, 7], "fps": 7, "loop": true },
-    "walkLeft": { "atlas": "main", "row": 2, "frames": [0, 1, 2, 3, 4, 5, 6, 7], "fps": 7, "loop": true },
-    "offerPaw": { "atlas": "main", "row": 3, "frames": [0, 1, 2, 3], "fps": 5, "loop": false },
-    "smallHop": { "atlas": "main", "row": 4, "frames": [0, 1, 2, 3, 4], "fps": 5, "loop": false },
-    "pickedUpPose": { "atlas": "main", "row": 4, "frames": [2, 3], "fps": 2, "loop": true },
-    "landSoftly": { "atlas": "main", "row": 4, "frames": [3, 4], "fps": 5, "loop": false },
-    "sleepEnter": { "atlas": "main", "row": 5, "frames": [0, 1, 2, 3, 4, 5, 6], "fps": 3, "loop": false },
-    "sleepLoop": { "atlas": "main", "row": 5, "frames": [7], "fps": 1, "loop": true },
-    "sleepExit": { "atlas": "main", "row": 5, "frames": [7, 6, 5, 4, 3, 2, 1, 0], "fps": 4, "loop": false },
-    "feedEnter": { "atlas": "main", "row": 6, "frames": [0, 1, 2], "fps": 3, "loop": false },
-    "feedLoop": { "atlas": "main", "row": 6, "frames": [2, 3, 4, 3], "fps": 3, "loop": true },
-    "feedExit": { "atlas": "main", "row": 6, "frames": [4, 5], "fps": 4, "loop": false },
-    "lieDown": { "atlas": "main", "row": 5, "frames": [0, 1, 2, 3, 4, 5, 6, 7], "fps": 4, "loop": true },
-    "begTreat": { "atlas": "main", "row": 6, "frames": [0, 1, 2, 3, 4, 5], "fps": 4, "loop": true },
-    "handshake": { "atlas": "main", "row": 7, "frames": [0, 1, 2, 3, 4, 5], "fps": 5, "loop": false },
-    "territoryScan": { "atlas": "main", "row": 8, "frames": [0, 1, 2, 3, 4, 5], "fps": 4, "loop": true },
-    "lookUpper": { "atlas": "main", "row": 9, "frames": [0, 1, 2, 3, 4, 5, 6, 7], "fps": 4, "loop": false },
-    "lookLower": { "atlas": "main", "row": 10, "frames": [0, 1, 2, 3, 4, 5, 6, 7], "fps": 4, "loop": false }
+    "idle": {
+      "atlas": "main",
+      "row": 0,
+      "frames": [
+        0,
+        1,
+        2,
+        3,
+        4,
+        5
+      ],
+      "fps": 4,
+      "loop": true
+    },
+    "walkRight": {
+      "atlas": "main",
+      "row": 1,
+      "frames": [
+        0,
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7
+      ],
+      "fps": 7,
+      "loop": true
+    },
+    "walkLeft": {
+      "atlas": "main",
+      "row": 2,
+      "frames": [
+        0,
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7
+      ],
+      "fps": 7,
+      "loop": true
+    },
+    "offerPaw": {
+      "atlas": "main",
+      "row": 3,
+      "frames": [
+        0,
+        1,
+        2,
+        3
+      ],
+      "fps": 5,
+      "loop": false
+    },
+    "smallHop": {
+      "atlas": "main",
+      "row": 4,
+      "frames": [
+        0,
+        1,
+        2,
+        3,
+        4
+      ],
+      "fps": 5,
+      "loop": false
+    },
+    "pickedUpPose": {
+      "atlas": "main",
+      "row": 4,
+      "frames": [
+        2,
+        3
+      ],
+      "fps": 2,
+      "loop": true
+    },
+    "landSoftly": {
+      "atlas": "main",
+      "row": 4,
+      "frames": [
+        3,
+        4
+      ],
+      "fps": 5,
+      "loop": false
+    },
+    "sleepEnter": {
+      "atlas": "main",
+      "row": 5,
+      "frames": [
+        0,
+        1,
+        2,
+        3,
+        4,
+        5,
+        6
+      ],
+      "fps": 3,
+      "loop": false
+    },
+    "sleepLoop": {
+      "atlas": "main",
+      "row": 5,
+      "frames": [
+        7
+      ],
+      "fps": 1,
+      "loop": true
+    },
+    "sleepExit": {
+      "atlas": "main",
+      "row": 5,
+      "frames": [
+        7,
+        6,
+        5,
+        4,
+        3,
+        2,
+        1,
+        0
+      ],
+      "fps": 4,
+      "loop": false
+    },
+    "feedEnter": {
+      "atlas": "main",
+      "row": 6,
+      "frames": [
+        0,
+        1,
+        2
+      ],
+      "fps": 3,
+      "loop": false
+    },
+    "feedLoop": {
+      "atlas": "main",
+      "row": 6,
+      "frames": [
+        2,
+        3,
+        4,
+        3
+      ],
+      "fps": 3,
+      "loop": true
+    },
+    "feedExit": {
+      "atlas": "main",
+      "row": 6,
+      "frames": [
+        4,
+        5
+      ],
+      "fps": 4,
+      "loop": false
+    },
+    "lieDown": {
+      "atlas": "main",
+      "row": 5,
+      "frames": [
+        0,
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7
+      ],
+      "fps": 4,
+      "loop": true
+    },
+    "begTreat": {
+      "atlas": "main",
+      "row": 6,
+      "frames": [
+        0,
+        1,
+        2,
+        3,
+        4,
+        5
+      ],
+      "fps": 4,
+      "loop": true
+    },
+    "handshake": {
+      "atlas": "main",
+      "row": 7,
+      "frames": [
+        0,
+        1,
+        2,
+        3,
+        4,
+        5
+      ],
+      "fps": 5,
+      "loop": false
+    },
+    "territoryScan": {
+      "atlas": "main",
+      "row": 8,
+      "frames": [
+        0,
+        1,
+        2,
+        3,
+        4,
+        5
+      ],
+      "fps": 4,
+      "loop": true
+    },
+    "lookUpper": {
+      "atlas": "main",
+      "row": 9,
+      "frames": [
+        0,
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7
+      ],
+      "fps": 4,
+      "loop": false
+    },
+    "lookLower": {
+      "atlas": "main",
+      "row": 10,
+      "frames": [
+        0,
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7
+      ],
+      "fps": 4,
+      "loop": false
+    },
+    "touchHeadDetailed": {
+      "atlas": "touchV2",
+      "row": 0,
+      "frames": [0, 1, 2, 3, 4, 5, 6, 7],
+      "fps": 4,
+      "loop": false
+    },
+    "touchHeadFastDetailed": {
+      "atlas": "touchV2",
+      "row": 0,
+      "frames": [0, 2, 3, 4, 5, 6, 7],
+      "fps": 6,
+      "loop": false
+    },
+    "touchChinDetailed": {
+      "atlas": "touchV2",
+      "row": 1,
+      "frames": [0, 1, 2, 3, 4, 5, 6, 7],
+      "fps": 4,
+      "loop": false
+    },
+    "touchBellyDetailed": {
+      "atlas": "touchV2",
+      "row": 2,
+      "frames": [0, 1, 2, 3, 4, 5, 6, 7],
+      "fps": 4,
+      "loop": false
+    },
+    "touchTailDetailed": {
+      "atlas": "touchV2",
+      "row": 3,
+      "frames": [0, 1, 2, 3, 4, 5, 6, 7],
+      "fps": 5,
+      "loop": false
+    },
+    "treatNotice": {
+      "atlas": "interactionsV2",
+      "row": 0,
+      "frames": [
+        0,
+        1
+      ],
+      "fps": 4,
+      "loop": false
+    },
+    "treatApproach": {
+      "atlas": "interactionsV2",
+      "row": 0,
+      "frames": [
+        1,
+        2
+      ],
+      "fps": 4,
+      "loop": false
+    },
+    "treatEat": {
+      "atlas": "interactionsV2",
+      "row": 0,
+      "frames": [
+        2,
+        3,
+        4,
+        5,
+        4,
+        3
+      ],
+      "fps": 5,
+      "loop": true
+    },
+    "treatFinish": {
+      "atlas": "interactionsV2",
+      "row": 0,
+      "frames": [
+        5,
+        6,
+        7
+      ],
+      "fps": 4,
+      "loop": false
+    },
+    "butterflyNotice": {
+      "atlas": "interactionsV2",
+      "row": 1,
+      "frames": [
+        0,
+        1
+      ],
+      "fps": 4,
+      "loop": false
+    },
+    "butterflyCrouch": {
+      "atlas": "interactionsV2",
+      "row": 1,
+      "frames": [
+        1,
+        2
+      ],
+      "fps": 5,
+      "loop": false
+    },
+    "butterflyRun": {
+      "atlas": "interactionsV2",
+      "row": 1,
+      "frames": [
+        3,
+        4
+      ],
+      "fps": 7,
+      "loop": true
+    },
+    "butterflyPounce": {
+      "atlas": "interactionsV2",
+      "row": 1,
+      "frames": [
+        4,
+        5,
+        6
+      ],
+      "fps": 7,
+      "loop": false
+    },
+    "butterflyLand": {
+      "atlas": "interactionsV2",
+      "row": 1,
+      "frames": [
+        6,
+        7
+      ],
+      "fps": 5,
+      "loop": false
+    }
   },
   "capabilities": {
     "idle": "idle",
@@ -54,34 +442,160 @@
     "pickedUp": "pickedUpPose",
     "land": "landSoftly",
     "lookUpper": "lookUpper",
-    "lookLower": "lookLower"
+    "lookLower": "lookLower",
+    "treatNotice": "treatNotice",
+    "treatApproach": "treatApproach",
+    "treatEat": "treatEat",
+    "treatFinish": "treatFinish",
+    "butterflyNotice": "butterflyNotice",
+    "butterflyCrouch": "butterflyCrouch",
+    "butterflyRun": "butterflyRun",
+    "butterflyPounce": "butterflyPounce",
+    "butterflyLand": "butterflyLand"
   },
   "actions": {
-    "idle": { "loop": "idle" },
-    "walkLeft": { "loop": "walkLeft" },
-    "walkRight": { "loop": "walkRight" },
-    "look": { "loop": "territoryScan", "loopDuration": { "minMs": 3000, "maxMs": 6000 } },
-    "pet": { "loop": "handshake" },
-    "feed": { "enter": "feedEnter", "loop": "feedLoop", "exit": "feedExit", "loopDuration": { "minMs": 4000, "maxMs": 8000 } },
-    "sleep": { "enter": "sleepEnter", "loop": "sleepLoop", "exit": "sleepExit", "loopDuration": { "minMs": 30000, "maxMs": 120000 } },
-    "groom": { "enter": "idle", "loop": "handshake", "exit": "idle", "loopDuration": { "minMs": 5000, "maxMs": 12000 } },
-    "stretch": { "loop": "offerPaw" },
-    "play": { "loop": "smallHop" },
-    "pickedUp": { "loop": "pickedUpPose" },
-    "land": { "loop": "landSoftly" }
+    "idle": {
+      "loop": "idle"
+    },
+    "walkLeft": {
+      "loop": "walkLeft"
+    },
+    "walkRight": {
+      "loop": "walkRight"
+    },
+    "look": {
+      "loop": "territoryScan",
+      "loopDuration": {
+        "minMs": 3000,
+        "maxMs": 6000
+      }
+    },
+    "pet": {
+      "loop": "handshake"
+    },
+    "feed": {
+      "enter": "feedEnter",
+      "loop": "feedLoop",
+      "exit": "feedExit",
+      "loopDuration": {
+        "minMs": 4000,
+        "maxMs": 8000
+      }
+    },
+    "sleep": {
+      "enter": "sleepEnter",
+      "loop": "sleepLoop",
+      "exit": "sleepExit",
+      "loopDuration": {
+        "minMs": 30000,
+        "maxMs": 120000
+      }
+    },
+    "groom": {
+      "enter": "idle",
+      "loop": "handshake",
+      "exit": "idle",
+      "loopDuration": {
+        "minMs": 5000,
+        "maxMs": 12000
+      }
+    },
+    "stretch": {
+      "loop": "offerPaw"
+    },
+    "play": {
+      "loop": "smallHop"
+    },
+    "pickedUp": {
+      "loop": "pickedUpPose"
+    },
+    "land": {
+      "loop": "landSoftly"
+    }
   },
   "behaviorProfile": {
-    "scheduler": { "minIntervalMs": 9000, "maxIntervalMs": 18000, "recoveryMs": 8000 },
-    "movement": { "walkSpeed": 32, "minDurationMs": 2500, "maxDurationMs": 5000, "roamingHalfWidth": 180 },
-    "categoryWeights": { "movement": 20, "ambient": 30, "rest": 25, "social": 25 },
+    "scheduler": {
+      "minIntervalMs": 9000,
+      "maxIntervalMs": 18000,
+      "recoveryMs": 8000
+    },
+    "movement": {
+      "walkSpeed": 32,
+      "minDurationMs": 2500,
+      "maxDurationMs": 5000,
+      "roamingHalfWidth": 180
+    },
+    "categoryWeights": {
+      "movement": 20,
+      "ambient": 30,
+      "rest": 25,
+      "social": 25
+    },
     "actions": [
-      { "id": "walk-around", "capability": "walkRight", "category": "movement", "playback": "timed", "weight": 4, "cooldownMs": 10000, "minDurationMs": 2500, "maxDurationMs": 5000 },
-      { "id": "look-around", "capability": "look", "category": "ambient", "playback": "timed", "weight": 4, "cooldownMs": 10000, "minDurationMs": 3000, "maxDurationMs": 6000 },
-      { "id": "self-groom", "capability": "groom", "category": "ambient", "playback": "timed", "weight": 3, "cooldownMs": 14000, "minDurationMs": 5000, "maxDurationMs": 12000 },
-      { "id": "deep-rest", "capability": "sleep", "category": "rest", "playback": "timed", "weight": 2, "cooldownMs": 60000, "minDurationMs": 30000, "maxDurationMs": 120000 },
-      { "id": "pet-response", "capability": "pet", "category": "social", "playback": "once", "weight": 3, "cooldownMs": 12000 },
-      { "id": "playful-hop", "capability": "play", "category": "movement", "playback": "once", "weight": 0.6, "cooldownMs": 28000 },
-      { "id": "gentle-stretch", "capability": "stretch", "category": "ambient", "playback": "once", "weight": 1.5, "cooldownMs": 20000 }
+      {
+        "id": "walk-around",
+        "capability": "walkRight",
+        "category": "movement",
+        "playback": "timed",
+        "weight": 4,
+        "cooldownMs": 10000,
+        "minDurationMs": 2500,
+        "maxDurationMs": 5000
+      },
+      {
+        "id": "look-around",
+        "capability": "look",
+        "category": "ambient",
+        "playback": "timed",
+        "weight": 4,
+        "cooldownMs": 10000,
+        "minDurationMs": 3000,
+        "maxDurationMs": 6000
+      },
+      {
+        "id": "self-groom",
+        "capability": "groom",
+        "category": "ambient",
+        "playback": "timed",
+        "weight": 3,
+        "cooldownMs": 14000,
+        "minDurationMs": 5000,
+        "maxDurationMs": 12000
+      },
+      {
+        "id": "deep-rest",
+        "capability": "sleep",
+        "category": "rest",
+        "playback": "timed",
+        "weight": 2,
+        "cooldownMs": 60000,
+        "minDurationMs": 30000,
+        "maxDurationMs": 120000
+      },
+      {
+        "id": "pet-response",
+        "capability": "pet",
+        "category": "social",
+        "playback": "once",
+        "weight": 3,
+        "cooldownMs": 12000
+      },
+      {
+        "id": "playful-hop",
+        "capability": "play",
+        "category": "movement",
+        "playback": "once",
+        "weight": 0.6,
+        "cooldownMs": 28000
+      },
+      {
+        "id": "gentle-stretch",
+        "capability": "stretch",
+        "category": "ambient",
+        "playback": "once",
+        "weight": 1.5,
+        "cooldownMs": 20000
+      }
     ],
     "interaction": {
       "nearbyRadius": 240,
@@ -94,6 +608,57 @@
       "pickedUpCapability": "pickedUp",
       "landCapability": "land"
     },
-    "fallbackCapabilities": ["idle", "look"]
-  }
+    "fallbackCapabilities": [
+      "idle",
+      "look"
+    ]
+  },
+  "interactionActions": {
+    "touch-head": {
+      "loop": "touchHeadDetailed"
+    },
+    "touch-head-fast": {
+      "enter": "territoryScan",
+      "loop": "touchHeadFastDetailed"
+    },
+    "touch-chin": {
+      "loop": "touchChinDetailed"
+    },
+    "touch-belly": {
+      "loop": "touchBellyDetailed"
+    },
+    "touch-tail": {
+      "enter": "territoryScan",
+      "loop": "touchTailDetailed"
+    },
+    "feed-kibble": {
+      "enter": "treatNotice",
+      "loop": "treatEat",
+      "exit": "treatFinish",
+      "loopDuration": {
+        "minMs": 3000,
+        "maxMs": 4500
+      }
+    },
+    "feed-can": {
+      "enter": "treatApproach",
+      "loop": "treatEat",
+      "exit": "treatFinish",
+      "loopDuration": {
+        "minMs": 3400,
+        "maxMs": 5000
+      }
+    },
+    "play-ball": {
+      "enter": "butterflyNotice",
+      "loop": "butterflyPounce",
+      "exit": "butterflyLand"
+    },
+    "play-wand": {
+      "enter": "butterflyCrouch",
+      "loop": "butterflyPounce",
+      "exit": "butterflyLand"
+    }
+  },
+  "interactionTimelines": {}
 }

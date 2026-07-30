@@ -57,6 +57,18 @@ describe("pet eats treat scene", () => {
     expect(left.settlement.petPosition.x).toBe(455);
     expect(rightTreat.keyframes[1]!.value.position.x).toBeGreaterThan(500);
     expect(leftTreat.keyframes[1]!.value.position.x).toBeLessThan(500);
+    const rightPet = right.transformTracks.find(
+      ({ entityId }) => entityId === "pet",
+    )!;
+    const leftPet = left.transformTracks.find(
+      ({ entityId }) => entityId === "pet",
+    )!;
+    expect(rightPet.keyframes.every(({ value }) => value.scale.x > 0)).toBe(
+      true,
+    );
+    expect(leftPet.keyframes.every(({ value }) => value.scale.x < 0)).toBe(
+      true,
+    );
   });
 
   it("accepts a boundary-clamped approach distance", () => {
@@ -69,7 +81,7 @@ describe("pet eats treat scene", () => {
     expect(scene.settlement.petPosition.x).toBe(518);
   });
 
-  it("uses portable semantic clips that every pet manifest can resolve", () => {
+  it("uses dedicated feeding beats that every pet can personalize", () => {
     const scene = createPetEatsTreatScene({
       origin: { x: 400, y: 720 },
       direction: "right",
@@ -80,10 +92,10 @@ describe("pet eats treat scene", () => {
 
     expect(track.keyframes.map(({ clip, atMs }) => [clip, atMs])).toEqual([
       ["idle", 0],
-      ["look", 700],
-      ["walkRight", 1_800],
-      ["feed", 2_600],
-      ["feedExit", 5_000],
+      ["treatNotice", 700],
+      ["treatApproach", 1_800],
+      ["treatEat", 2_600],
+      ["treatFinish", 5_000],
       ["idle", 5_800],
     ]);
   });

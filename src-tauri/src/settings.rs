@@ -60,8 +60,10 @@ pub fn parse_settings(json: &str) -> Result<UserSettings, AppError> {
 }
 
 fn validate_pet_scale(pet_scale: f64) -> Result<(), AppError> {
-    if ![0.75, 1.0, 1.25, 1.5].contains(&pet_scale) {
-        return Err(AppError::message("petScale must be 0.75, 1, 1.25 or 1.5"));
+    if ![0.75, 1.0, 1.25, 1.5, 2.0, 3.0].contains(&pet_scale) {
+        return Err(AppError::message(
+            "petScale must be 0.75, 1, 1.25, 1.5, 2 or 3",
+        ));
     }
     Ok(())
 }
@@ -257,6 +259,18 @@ mod tests {
         let temp = temporary_settings_path(final_path);
         assert_ne!(temp, final_path);
         assert_eq!(temp.file_name().unwrap(), "settings.json.tmp");
+    }
+
+    #[test]
+    fn accepts_large_pet_scale_options() {
+        for pet_scale in [2.0, 3.0] {
+            let settings = UserSettings {
+                pet_scale,
+                ..UserSettings::default()
+            };
+            let json = serde_json::to_string(&settings).unwrap();
+            assert_eq!(parse_settings(&json).unwrap().pet_scale, pet_scale);
+        }
     }
 
     #[test]

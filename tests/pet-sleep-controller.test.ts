@@ -111,4 +111,36 @@ describe("PetSleepController", () => {
     expect(play).toHaveBeenLastCalledWith("idle", true);
     expect(cancel).toHaveBeenCalledWith(9);
   });
+
+  it("restores the visual for the current sleep state after a menu closes", () => {
+    vi.useFakeTimers();
+    const play = vi.fn();
+    const controller = new PetSleepController(
+      {
+        enter: "sleepEnter",
+        loop: "sleepLoop",
+        exit: "sleepExit",
+      },
+      {
+        play,
+        durationMs: () => 500,
+        changed: vi.fn(),
+        schedule: (callback, delayMs) =>
+          window.setTimeout(callback, delayMs),
+        cancel: (handle) => window.clearTimeout(handle),
+      },
+    );
+
+    controller.restoreVisualState();
+    expect(play).toHaveBeenLastCalledWith("idle", true);
+
+    controller.sleep();
+    controller.restoreVisualState();
+    expect(play).toHaveBeenLastCalledWith("sleepEnter", false);
+
+    vi.advanceTimersByTime(500);
+    controller.restoreVisualState();
+    expect(play).toHaveBeenLastCalledWith("sleepLoop", true);
+    vi.useRealTimers();
+  });
 });

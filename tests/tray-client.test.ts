@@ -56,12 +56,13 @@ describe("TrayClient", () => {
     listeners.get("tray://pause")?.({ payload: null });
     listeners.get("tray://select-personality")?.({ payload: "lively" });
     listeners.get("tray://select-scale")?.({ payload: 1.25 });
+    listeners.get("tray://select-scale")?.({ payload: 3 });
     listeners.get("tray://pet-action")?.({ payload: "sleep" });
 
     expect(selectPet).toHaveBeenCalledWith("placeholder");
     expect(pause).toHaveBeenCalledOnce();
     expect(selectPersonality).toHaveBeenCalledWith("lively");
-    expect(selectScale).toHaveBeenCalledWith(1.25);
+    expect(selectScale.mock.calls).toEqual([[1.25], [3]]);
     expect(petAction).toHaveBeenCalledWith("sleep");
     dispose();
     expect(listeners.size).toBe(0);

@@ -13,6 +13,14 @@ export interface PetEatsTreatOptions {
   approachDistancePx?: number;
 }
 
+export type PetFood = "treat" | "kibble" | "can";
+const INTERACTION_PROP_LAYER = 120;
+const INTERACTION_EFFECT_LAYER = 125;
+
+export interface PetEatsFoodOptions extends PetEatsTreatOptions {
+  food: PetFood;
+}
+
 function shifted(
   origin: Point,
   direction: number,
@@ -44,27 +52,29 @@ function petFrames(
     direction,
     approachDistance,
   );
+  const petTransform = (position: Point): EntityTransform =>
+    transform(position, 1, { x: direction, y: 1 });
   return [
-    { atMs: 0, value: transform(origin), easing: "easeOut" },
-    { atMs: 700, value: transform(origin), easing: "easeOut" },
+    { atMs: 0, value: petTransform(origin), easing: "easeOut" },
+    { atMs: 700, value: petTransform(origin), easing: "easeOut" },
     {
       atMs: 1_800,
-      value: transform(origin),
+      value: petTransform(origin),
       easing: "easeInOut",
     },
     {
       atMs: 2_600,
-      value: transform(eatingPosition),
+      value: petTransform(eatingPosition),
       easing: "easeOut",
     },
     {
       atMs: 5_000,
-      value: transform(eatingPosition),
+      value: petTransform(eatingPosition),
       easing: "easeInOut",
     },
     {
       atMs: 6_500,
-      value: transform(eatingPosition),
+      value: petTransform(eatingPosition),
       easing: "linear",
     },
   ];
@@ -146,23 +156,19 @@ function dishFrames(
   ];
 }
 
-function petAnimations(direction: "left" | "right"): AnimationKeyframe[] {
+function petAnimations(_direction: "left" | "right"): AnimationKeyframe[] {
   return [
     { atMs: 0, clip: "idle", loop: true },
-    { atMs: 700, clip: "look", loop: false },
-    {
-      atMs: 1_800,
-      clip: direction === "left" ? "walkLeft" : "walkRight",
-      loop: true,
-    },
-    { atMs: 2_600, clip: "feed", loop: true },
-    { atMs: 5_000, clip: "feedExit", loop: false },
+    { atMs: 700, clip: "treatNotice", loop: false },
+    { atMs: 1_800, clip: "treatApproach", loop: false },
+    { atMs: 2_600, clip: "treatEat", loop: true },
+    { atMs: 5_000, clip: "treatFinish", loop: false },
     { atMs: 5_800, clip: "idle", loop: true },
   ];
 }
 
-export function createPetEatsTreatScene(
-  options: PetEatsTreatOptions,
+export function createPetEatsFoodScene(
+  options: PetEatsFoodOptions,
 ): SceneDefinition {
   const petEntityId = options.petEntityId ?? "pet";
   const direction = options.direction === "right" ? 1 : -1;
@@ -182,8 +188,51 @@ export function createPetEatsTreatScene(
     direction,
     approachDistance,
   );
+  const foodPropId =
+    options.food === "kibble"
+      ? "kibble-bowl"
+      : options.food === "can"
+        ? "wet-food-can"
+        : "treat-stick";
+  const foodEntities =
+    options.food === "treat"
+      ? [
+          {
+            id: "treat-dish",
+            kind: "prop" as const,
+            layer: INTERACTION_PROP_LAYER,
+            visual: "treat-dish",
+            localBounds: { x: -48, y: -15, width: 96, height: 30 },
+          },
+          {
+            id: "treat-stick",
+            kind: "prop" as const,
+            layer: INTERACTION_PROP_LAYER,
+            visual: "treat-stick",
+            localBounds: { x: -58, y: -18, width: 116, height: 36 },
+          },
+        ]
+      : [
+          {
+            id: foodPropId,
+            kind: "prop" as const,
+            layer: INTERACTION_PROP_LAYER,
+            visual: foodPropId,
+            localBounds:
+              options.food === "kibble"
+                ? { x: -49, y: -30, width: 98, height: 60 }
+                : { x: -38, y: -50, width: 76, height: 68 },
+          },
+        ];
+  const foodTracks =
+    options.food === "treat"
+      ? [
+          { entityId: "treat-dish", keyframes: dish },
+          { entityId: "treat-stick", keyframes: treat },
+        ]
+      : [{ entityId: foodPropId, keyframes: dish }];
   return {
-    id: `${petEntityId}-eats-treat-${options.direction}`,
+    id: `${petEntityId}-eats-${options.food}-${options.direction}`,
     durationMs: 6_500,
     boundsPadding: 28,
     entities: [
@@ -194,24 +243,11 @@ export function createPetEatsTreatScene(
         visual: "pet-shadow",
         localBounds: { x: -68, y: -12, width: 136, height: 24 },
       },
-      {
-        id: "treat-dish",
-        kind: "prop",
-        layer: 28,
-        visual: "treat-dish",
-        localBounds: { x: -48, y: -15, width: 96, height: 30 },
-      },
-      {
-        id: "treat-stick",
-        kind: "prop",
-        layer: 30,
-        visual: "treat-stick",
-        localBounds: { x: -58, y: -18, width: 116, height: 36 },
-      },
+      ...foodEntities,
       {
         id: "treat-sparkle",
         kind: "effect",
-        layer: 29,
+        layer: INTERACTION_EFFECT_LAYER,
         visual: "treat-sparkle",
         localBounds: { x: -28, y: -28, width: 56, height: 56 },
       },
@@ -228,8 +264,7 @@ export function createPetEatsTreatScene(
           ),
         })),
       },
-      { entityId: "treat-dish", keyframes: dish },
-      { entityId: "treat-stick", keyframes: treat },
+      ...foodTracks,
       {
         entityId: "treat-sparkle",
         keyframes: treat.map((frame) => ({
@@ -267,4 +302,10 @@ export function createPetEatsTreatScene(
       petPosition: settled,
     },
   };
+}
+
+export function createPetEatsTreatScene(
+  options: PetEatsTreatOptions,
+): SceneDefinition {
+  return createPetEatsFoodScene({ ...options, food: "treat" });
 }

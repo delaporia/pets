@@ -110,6 +110,19 @@ function fixture() {
 }
 
 describe("SceneDirector", () => {
+  it("samples the first keyframe before a transient actor can affect viewport bounds", () => {
+    const { registry, director } = fixture();
+
+    void director.play(scene);
+
+    expect(registry.get("butterfly")?.transform).toEqual({
+      position: { x: 420, y: 620 },
+      scale: { x: 1, y: 1 },
+      rotation: 0,
+      alpha: 1,
+    });
+  });
+
   it("settles the pet at the endpoint and releases transient actors", async () => {
     const { registry, ying, director } = fixture();
     const result = director.play(scene);

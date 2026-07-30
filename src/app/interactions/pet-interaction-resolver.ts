@@ -24,14 +24,20 @@ export const interactionActionIds = [
 export type InteractionActionId =
   (typeof interactionActionIds)[number];
 
-type SharedScene = "treat" | "butterfly";
+export type SharedInteractionScene =
+  | "feed-treat"
+  | "feed-kibble"
+  | "feed-can"
+  | "play-butterfly"
+  | "play-ball"
+  | "play-wand";
 
 export type ResolvedPetInteraction =
   | {
       kind: "scene";
       source: "shared";
       actionId: InteractionActionId;
-      scene: SharedScene;
+      scene: SharedInteractionScene;
     }
   | {
       kind: "timeline";
@@ -80,6 +86,17 @@ const actionIdByOption: Record<
   wand: "play-wand",
 };
 
+const sharedSceneByAction: Partial<
+  Record<InteractionActionId, SharedInteractionScene>
+> = {
+  "feed-treat": "feed-treat",
+  "feed-kibble": "feed-kibble",
+  "feed-can": "feed-can",
+  "play-butterfly": "play-butterfly",
+  "play-ball": "play-ball",
+  "play-wand": "play-wand",
+};
+
 export function interactionActionIdForOption(
   option: SecondaryInteraction,
 ): InteractionActionId {
@@ -101,22 +118,6 @@ export function resolvePetInteraction(
   manifest: PetManifest,
   actionId: InteractionActionId,
 ): ResolvedPetInteraction {
-  if (actionId === "feed-treat") {
-    return {
-      kind: "scene",
-      source: "shared",
-      actionId,
-      scene: "treat",
-    };
-  }
-  if (actionId === "play-butterfly") {
-    return {
-      kind: "scene",
-      source: "shared",
-      actionId,
-      scene: "butterfly",
-    };
-  }
   const timeline = manifest.interactionTimelines[actionId];
   if (timeline) {
     return {
@@ -124,6 +125,15 @@ export function resolvePetInteraction(
       source: "pet",
       actionId,
       definition: timeline,
+    };
+  }
+  const scene = sharedSceneByAction[actionId];
+  if (scene) {
+    return {
+      kind: "scene",
+      source: "shared",
+      actionId,
+      scene,
     };
   }
   const phased = manifest.interactionActions[actionId];

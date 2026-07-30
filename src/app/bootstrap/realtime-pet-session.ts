@@ -1,13 +1,22 @@
 import type { PersonalityMode } from "../personality/profiles";
 import type { LoadedPet } from "../pets/pet-loader";
-import type { PetScale } from "../native/tray-client";
 import type { HitMaskPayload } from "../native/native-window";
 import type { WorkArea } from "../runtime/pet-context";
 import { StageRuntime } from "../runtime/stage-runtime";
 import { createPetChasesButterflyScene } from "../scenes/pet-chases-butterfly";
-import { createPetEatsTreatScene } from "../scenes/pet-eats-treat";
+import {
+  createPetEatsFoodScene,
+  type PetFood,
+} from "../scenes/pet-eats-treat";
+import {
+  createPetPlaysWithToyScene,
+  type PetToy,
+} from "../scenes/pet-plays-with-toy";
 import { SceneDirector } from "../scenes/scene-director";
-import type { SceneEntityDeclaration } from "../scenes/timeline";
+import type {
+  SceneDefinition,
+  SceneEntityDeclaration,
+} from "../scenes/timeline";
 import type { StageEntity } from "../stage/entity";
 import { EntityRegistry } from "../stage/entity-registry";
 import type { Point, Rect } from "../stage/geometry";
@@ -42,6 +51,10 @@ import {
   movementWithinRoamingBounds,
   roamingBoundsFor,
 } from "../stage/roaming-boundary";
+import {
+  clampEntityPositionToWorkArea,
+  PET_VIEWPORT_PADDING,
+} from "../stage/pet-screen-fit";
 
 interface RealtimeNative {
   resizeAndMove(bounds: Rect): Promise<void>;
@@ -55,10 +68,10 @@ export interface RealtimePetSessionOptions {
   canvas: HTMLCanvasElement;
   interactionRoot: HTMLElement;
   pet: LoadedPet;
-  petScale: PetScale;
+  petScale: number;
   workArea: WorkArea;
   native: RealtimeNative;
-  previousWindowPosition?: Point;
+  previousFootPosition?: Point;
   paused: boolean;
   personalityMode: PersonalityMode;
 }
@@ -77,9 +90,9 @@ export interface RealtimePetSession {
 
 function initialFootPosition(
   pet: LoadedPet,
-  petScale: PetScale,
+  petScale: number,
   workArea: WorkArea,
-  previousWindowPosition?: Point,
+  previousFootPosition?: Point,
 ): Point {
   const idle = pet.manifest.animations[
     pet.manifest.capabilities.idle
@@ -92,11 +105,8 @@ function initialFootPosition(
     x: atlas.cellWidth / 2,
     y: atlas.cellHeight,
   };
-  if (previousWindowPosition) {
-    return {
-      x: previousWindowPosition.x + foot.x * scale,
-      y: previousWindowPosition.y + foot.y * scale,
-    };
+  if (previousFootPosition) {
+    return { ...previousFootPosition };
   }
   return {
     x:
@@ -152,9 +162,13 @@ export async function createRealtimePetSession(
       pet,
       petScale,
       workArea,
-      options.previousWindowPosition,
+      options.previousFootPosition,
     ),
     petScale,
+  );
+  actor.transform.position = clampEntityPositionToWorkArea(
+    actor,
+    workArea,
   );
   let activityAnchor = { ...actor.transform.position };
   const currentRoamingBounds = () =>
@@ -369,12 +383,28 @@ export async function createRealtimePetSession(
     stage,
     native,
     coordinates,
-    boundsPadding: 28,
+    boundsPadding: PET_VIEWPORT_PADDING,
     hitMaskIntervalMs: 100,
     onLayout: syncInteractionLayout,
     onBeforeRender: async (elapsedMs, deltaMs) => {
       autonomy.update(elapsedMs);
       bodyPreview.update(deltaMs);
+      actor.transform.position = clampEntityPositionToWorkArea(
+        actor,
+        workArea,
+      );
+      if (menuSurface) {
+        if (
+          actor.animation?.clip !== pet.manifest.capabilities.idle ||
+          actor.animation.loop !== true
+        ) {
+          actor.animation = {
+            clip: pet.manifest.capabilities.idle,
+            loop: true,
+            elapsedMs: 0,
+          };
+        }
+      }
       if (personalityMode === "test") {
         actor.gazeDirectionIndex = undefined;
         testPreview.update(deltaMs);
@@ -405,12 +435,27 @@ export async function createRealtimePetSession(
     registry.remove(menuSurface.id);
     menuSurface = undefined;
     delete interactionRoot.dataset.side;
+    sleepController.restoreVisualState();
     await runtime.update(0);
     await native.lockInteraction(false);
   };
 
-  const playButterfly = async (): Promise<boolean> => {
+  const playInteractionScene = async (
+    scene: SceneDefinition,
+  ): Promise<boolean> => {
     director.interrupt("replace");
+    runtime.setInteractionSceneActive(true);
+    runtime.invalidateHitMask();
+    try {
+      const result = await director.play(scene);
+      return result.status === "completed";
+    } finally {
+      runtime.setInteractionSceneActive(false);
+      runtime.invalidateHitMask();
+    }
+  };
+
+  const playButterfly = async (): Promise<boolean> => {
     const movement = movementWithinRoamingBounds(
       actor.transform.position,
       currentRoamingBounds(),
@@ -429,31 +474,43 @@ export async function createRealtimePetSession(
         Math.random() < 0.72 ? "escape" : "caught",
       motion: petSceneMotionProfileFor(pet.manifest.id),
     });
-    runtime.invalidateHitMask();
-    const result = await director.play(scene);
-    runtime.invalidateHitMask();
-    return result.status === "completed";
+    return playInteractionScene(scene);
   };
 
-  const playTreat = async (): Promise<boolean> => {
-    director.interrupt("replace");
+  const playFood = async (food: PetFood): Promise<boolean> => {
     const movement = movementWithinRoamingBounds(
       actor.transform.position,
       currentRoamingBounds(),
       45,
     );
-    runtime.invalidateHitMask();
-    const result = await director.play(
-      createPetEatsTreatScene({
+    return playInteractionScene(
+      createPetEatsFoodScene({
         petEntityId: actor.id,
         origin: { ...actor.transform.position },
         direction: movement.direction,
         approachDistancePx: movement.distance,
+        food,
       }),
     );
-    runtime.invalidateHitMask();
-    return result.status === "completed";
   };
+
+  const playToy = async (toy: PetToy): Promise<boolean> => {
+    const movement = movementWithinRoamingBounds(
+      actor.transform.position,
+      currentRoamingBounds(),
+      18,
+    );
+    return playInteractionScene(
+      createPetPlaysWithToyScene({
+        petEntityId: actor.id,
+        origin: { ...actor.transform.position },
+        direction: movement.direction,
+        toy,
+      }),
+    );
+  };
+
+  const playTreat = (): Promise<boolean> => playFood("treat");
 
   const previewFor = (
     resolved: ResolvedPetInteraction,
@@ -490,9 +547,20 @@ export async function createRealtimePetSession(
     resolved: ResolvedPetInteraction,
   ): Promise<boolean> => {
     if (resolved.kind === "scene") {
-      return resolved.scene === "butterfly"
-        ? playButterfly()
-        : playTreat();
+      switch (resolved.scene) {
+        case "feed-treat":
+          return playFood("treat");
+        case "feed-kibble":
+          return playFood("kibble");
+        case "feed-can":
+          return playFood("can");
+        case "play-butterfly":
+          return playButterfly();
+        case "play-ball":
+          return playToy("ball");
+        case "play-wand":
+          return playToy("wand");
+      }
     }
     const preview = previewFor(resolved);
     if (!preview) return false;
@@ -595,6 +663,15 @@ export async function createRealtimePetSession(
       return;
     }
     director.interrupt("menu");
+    bodyPreview.stop();
+    testPreview.stop();
+    testActionLabel?.classList.remove("visible");
+    if (testActionLabel) testActionLabel.textContent = "";
+    actor.animation = {
+      clip: pet.manifest.capabilities.idle,
+      loop: true,
+      elapsedMs: 0,
+    };
     const actorBounds = actor.localBounds!;
     const roomOnRight =
       workArea.x + workArea.width - actor.transform.position.x;
@@ -675,6 +752,8 @@ export async function createRealtimePetSession(
         if (!menuSurface) return;
         menuSurface.transform.position = { ...position };
       },
+      constrainPosition: (position) =>
+        clampEntityPositionToWorkArea(actor, workArea, position),
       invalidate: () => runtime.invalidateHitMask(),
     },
   );
@@ -684,10 +763,7 @@ export async function createRealtimePetSession(
     runtime,
     actor,
     director,
-    position: () => {
-      const viewport = coordinates.viewport;
-      return { x: viewport.x, y: viewport.y };
-    },
+    position: () => ({ ...actor.transform.position }),
     playButterfly,
     performAction,
     isSleeping: () => sleepController.isSleeping,

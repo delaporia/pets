@@ -137,6 +137,113 @@ function createTreatSparkleView(): Container {
   return view;
 }
 
+function createKibbleBowlView(): Container {
+  const view = new Container();
+  const bowl = new Graphics()
+    .ellipse(0, 11, 45, 10)
+    .fill({ color: 0x3d3247, alpha: 0.18 })
+    .ellipse(0, 0, 43, 14)
+    .fill({ color: 0xfff7ec })
+    .stroke({ color: 0xd596aa, width: 2.5 })
+    .ellipse(0, -2, 34, 9)
+    .fill({ color: 0xc98953 })
+    .stroke({ color: 0x9c643d, width: 1.5 });
+  const kibble = new Graphics();
+  for (const [x, y, radius, color] of [
+    [-23, -4, 4.2, 0x9f6238],
+    [-13, 0, 4.5, 0xbd7543],
+    [-4, -5, 4.1, 0x8e5432],
+    [7, 0, 4.5, 0xc47c46],
+    [18, -5, 4.2, 0x985b35],
+    [26, 1, 3.8, 0xb66f3f],
+    [2, 3, 4.1, 0xa65f36],
+  ] as const) {
+    kibble.circle(x, y, radius).fill({ color });
+  }
+  view.addChild(bowl, kibble);
+  return view;
+}
+
+function createWetFoodCanView(): Container {
+  const view = new Container();
+  const can = new Graphics()
+    .roundRect(-27, -19, 54, 38, 8)
+    .fill({ color: 0xf5c9d6 })
+    .stroke({ color: 0x8e6573, width: 2.5 })
+    .ellipse(0, -18, 27, 8)
+    .fill({ color: 0xf8f2e9 })
+    .stroke({ color: 0x8e6573, width: 2 })
+    .ellipse(0, -18, 19, 5)
+    .fill({ color: 0xc7866c })
+    .roundRect(-18, -3, 36, 14, 6)
+    .fill({ color: 0xfff6e9 });
+  const fish = new Graphics()
+    .ellipse(0, 4, 8, 4.5)
+    .fill({ color: 0xe9a275 })
+    .moveTo(-7, 4)
+    .lineTo(-14, -1)
+    .lineTo(-14, 9)
+    .closePath()
+    .fill({ color: 0xe9a275 })
+    .circle(4, 3, 1.2)
+    .fill({ color: 0x6d4c55 });
+  const lid = new Graphics()
+    .ellipse(15, -39, 25, 7)
+    .fill({ color: 0xe6e5e2 })
+    .stroke({ color: 0x8c8a8b, width: 2 })
+    .circle(14, -39, 5)
+    .stroke({ color: 0x9d9696, width: 2 });
+  view.addChild(can, fish, lid);
+  return view;
+}
+
+function createToyBallView(): Container {
+  const view = new Container();
+  const ball = new Graphics()
+    .circle(0, 0, 21)
+    .fill({ color: 0xf29db8 })
+    .stroke({ color: 0x8c5870, width: 2.5 })
+    .moveTo(-17, -10)
+    .bezierCurveTo(-4, -17, 8, -14, 18, -4)
+    .stroke({ color: 0xffd3df, width: 3 })
+    .moveTo(-19, 5)
+    .bezierCurveTo(-5, -2, 8, 2, 17, 11)
+    .stroke({ color: 0xc86c91, width: 3 })
+    .moveTo(-6, -20)
+    .bezierCurveTo(-2, -8, 2, 8, 7, 20)
+    .stroke({ color: 0xffd3df, width: 2.5 })
+    .moveTo(17, 13)
+    .bezierCurveTo(31, 20, 38, 15, 45, 22)
+    .stroke({ color: 0xc86c91, width: 2.5 });
+  view.addChild(ball);
+  return view;
+}
+
+function createToyWandView(): Container {
+  const view = new Container();
+  const wand = new Graphics()
+    .moveTo(30, -88)
+    .lineTo(-9, -17)
+    .stroke({ color: 0x86607a, width: 5 })
+    .circle(31, -90, 6)
+    .fill({ color: 0xf2b2c7 })
+    .moveTo(-9, -17)
+    .bezierCurveTo(-18, 2, -8, 16, -17, 29)
+    .stroke({ color: 0xe4b6cd, width: 2 });
+  const feathers = new Graphics()
+    .ellipse(-20, 36, 11, 25)
+    .fill({ color: 0xffc8db })
+    .stroke({ color: 0x9b657f, width: 2 })
+    .ellipse(-3, 39, 10, 23)
+    .fill({ color: 0xbddcff })
+    .stroke({ color: 0x6c7695, width: 2 })
+    .ellipse(-12, 47, 10, 21)
+    .fill({ color: 0xffe39b })
+    .stroke({ color: 0xa98455, width: 2 });
+  view.addChild(wand, feathers);
+  return view;
+}
+
 function createBondHeartView(): Container {
   const view = new Container();
   const heart = (
@@ -204,6 +311,14 @@ export function createDefaultPixiView(
       return createTreatDishView();
     case "treat-sparkle":
       return createTreatSparkleView();
+    case "kibble-bowl":
+      return createKibbleBowlView();
+    case "wet-food-can":
+      return createWetFoodCanView();
+    case "toy-ball":
+      return createToyBallView();
+    case "toy-wand":
+      return createToyWandView();
     case "bond-heart":
       return createBondHeartView();
     default:

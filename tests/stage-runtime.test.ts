@@ -166,6 +166,16 @@ describe("StageRuntime", () => {
     expect(stage.render).toHaveBeenCalledOnce();
   });
 
+  it("advances an explicit interaction scene while autonomous activity is paused", async () => {
+    const { runtime, director } = fixture();
+    runtime.setPaused(true);
+    runtime.setInteractionSceneActive(true);
+
+    await runtime.update(16);
+
+    expect(director.update).toHaveBeenCalledWith(16);
+  });
+
   it("notifies session controllers when pause state changes", () => {
     const onPausedChanged = vi.fn();
     const { runtime } = fixture({ onPausedChanged });

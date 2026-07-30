@@ -299,6 +299,46 @@ describe("stage pet interactions", () => {
     vi.useRealTimers();
   });
 
+  it("applies the screen constraint before publishing a dragged position", () => {
+    const canvas = document.createElement("canvas");
+    const pet = actor();
+    const positionChanged = vi.fn();
+    const remove = installStagePetInteractions(canvas, pet, {
+      interrupt: vi.fn(),
+      lockInteraction: vi.fn(async () => undefined),
+      openMenu: vi.fn(),
+      constrainPosition: () => ({ x: 120, y: 640 }),
+      positionChanged,
+      invalidate: vi.fn(),
+    });
+
+    canvas.dispatchEvent(
+      pointerEvent("pointerdown", {
+        pointerId: 20,
+        button: 0,
+        clientX: 20,
+        clientY: 20,
+        screenX: 320,
+        screenY: 650,
+        bubbles: true,
+      }),
+    );
+    window.dispatchEvent(
+      pointerEvent("pointermove", {
+        pointerId: 20,
+        clientX: 40,
+        clientY: 40,
+        screenX: -500,
+        screenY: 2_000,
+        bubbles: true,
+      }),
+    );
+
+    expect(pet.transform.position).toEqual({ x: 120, y: 640 });
+    expect(positionChanged).toHaveBeenCalledWith({ x: 120, y: 640 });
+    remove();
+  });
+
   it("lands and unlocks when pointer capture is unexpectedly lost", async () => {
     vi.useFakeTimers();
     const canvas = document.createElement("canvas");
